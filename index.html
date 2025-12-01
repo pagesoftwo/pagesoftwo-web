@@ -416,6 +416,159 @@
             line-height: 1.6;
         }
         
+        /* Hidden API Page - Not in menu */
+        #api {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: calc(100vh - 120px);
+        }
+        
+        .api-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+        
+        .api-docs {
+            background: rgba(20, 20, 20, 0.7);
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 2.5rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .api-docs h2 {
+            color: #fff;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .api-docs h3 {
+            color: #6c5ce7;
+            margin: 1.5rem 0 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .api-endpoint {
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .endpoint-method {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: #6c5ce7;
+            color: white;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-right: 0.8rem;
+        }
+        
+        .api-response {
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .json-key {
+            color: #6c5ce7;
+        }
+        
+        .json-string {
+            color: #27ca3f;
+        }
+        
+        .json-number {
+            color: #fd79a8;
+        }
+        
+        .json-boolean {
+            color: #ffbd2e;
+        }
+        
+        .api-tester {
+            background: rgba(20, 20, 20, 0.7);
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 2.5rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .api-tester h3 {
+            color: #fff;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .api-select {
+            flex: 1;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        .test-button {
+            padding: 0.8rem 1.5rem;
+            background: rgba(108, 92, 231, 0.2);
+            border: 1px solid #6c5ce7;
+            color: #a29bfe;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            background: rgba(108, 92, 231, 0.4);
+        }
+        
+        .test-result {
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            min-height: 200px;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+        
+        .api-note {
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            color: #a29bfe;
+        }
+        
+        .api-note h4 {
+            color: #6c5ce7;
+            margin-bottom: 0.8rem;
+        }
+        
         /* Footer */
         .footer {
             text-align: center;
@@ -503,11 +656,15 @@
                 height: 70px;
             }
             
+            .api-container {
+                grid-template-columns: 1fr;
+            }
+            
             .grid-container, .projects-grid {
                 grid-template-columns: 1fr;
             }
             
-            #home, #about, #projects {
+            #home, #about, #projects, #api {
                 padding: 3rem 1rem;
             }
         }
@@ -706,7 +863,62 @@
                     _<br>
                     [ ]
                 </div>
+            </div>
 
+            <!-- Hidden API Page - Not in menu, accessible by direct link -->
+            <div id="api" class="page">
+                <div class="api-container">
+                    <div class="api-docs">
+                        <h2>pagesoftwo API</h2>
+                        <p>Welcome to the hidden API interface. This page is not linked in the navigation and can only be accessed via direct URL.</p>
+                        
+                        <h3>Available Endpoints</h3>
+                        
+                        <div class="api-endpoint">
+                            <span class="endpoint-method">GET</span>
+                            <code>/api/data</code>
+                            <p style="margin-top: 0.5rem; color: #aaa;">Returns basic site information and statistics</p>
+                        </div>
+                        
+                        <div class="api-endpoint">
+                            <span class="endpoint-method">GET</span>
+                            <code>/api/projects</code>
+                            <p style="margin-top: 0.5rem; color: #aaa;">Returns list of current projects</p>
+                        </div>
+                        
+                        <div class="api-endpoint">
+                            <span class="endpoint-method">POST</span>
+                            <code>/api/log</code>
+                            <p style="margin-top: 0.5rem; color: #aaa;">Logs activity (requires authentication)</p>
+                        </div>
+                        
+                        <h3>Example Response</h3>
+                        <div class="api-response" id="exampleResponse">
+                            <!-- JSON will be displayed here -->
+                        </div>
+                    </div>
+                    
+                    <div class="api-tester">
+                        <h3>API Tester</h3>
+                        <div class="test-controls">
+                            <select class="api-select" id="apiEndpoint">
+                                <option value="/api/data">GET /api/data</option>
+                                <option value="/api/projects">GET /api/projects</option>
+                                <option value="/api/log">POST /api/log</option>
+                            </select>
+                            <button class="test-button" id="testApi">Test Endpoint</button>
+                        </div>
+                        <div class="test-result" id="testResult">
+                            <div style="color: #888; font-style: italic;">Click "Test Endpoint" to see results</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="api-note">
+                    <h4>Note</h4>
+                    <p>This is a mock API running entirely in your browser. For a real API, you would need a backend server. To share this page, use the direct URL: <code>https://yourdomain.com/#api</code></p>
+                    <p style="margin-top: 0.8rem; font-size: 0.9rem;">API calls are simulated and data is stored locally in your browser.</p>
+                </div>
             </div>
         </div>
 
@@ -716,33 +928,47 @@
                 id="current-year">2024</span>
         </div>
 
-        <!-- AI Chat UI Box -->
-        <div id="ai-box">
-        <input id="ai-input" placeholder="Type message..." />
-        <button id="ai-send">Send</button>
-        <div id="ai-output"></div>
-        </div>
-
-
-
         <script>
         // Tab Navigation
         const tabs = document.querySelectorAll('.tab');
         const pages = document.querySelectorAll('.page');
         
+        // Function to switch pages
+        function switchPage(pageId) {
+            // Remove active class from all tabs and pages
+            tabs.forEach(t => t.classList.remove('active'));
+            pages.forEach(p => p.classList.remove('active'));
+            
+            // Add active class to corresponding tab (if it exists and is not api)
+            const tab = document.querySelector(`[data-page="${pageId}"]`);
+            if (tab && pageId !== 'api') {
+                tab.classList.add('active');
+            }
+            
+            // Show corresponding page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Tab click events
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                // Remove active class from all tabs and pages
-                tabs.forEach(t => t.classList.remove('active'));
-                pages.forEach(p => p.classList.remove('active'));
-                
-                // Add active class to clicked tab
-                tab.classList.add('active');
-                
-                // Show corresponding page
                 const pageId = tab.getAttribute('data-page');
-                document.getElementById(pageId).classList.add('active');
+                switchPage(pageId);
             });
+        });
+        
+        // Check URL hash on load
+        window.addEventListener('load', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash === 'api') {
+                switchPage('api');
+            }
+            
+            // Initialize API example
+            initializeAPI();
         });
         
         // Set current year
@@ -780,14 +1006,160 @@
             });
         }
 
-        document.getElementById("ai-send").addEventListener("click", async () => {
-    const msg = document.getElementById("ai-input").value;
-    if (!msg) return;
-    const reply = await askOpenAI(msg);
-    document.getElementById("ai-output").innerText = reply;
-});
-
-
-    </script>
+        // ========== HIDDEN API FUNCTIONALITY ==========
+        
+        // Your API data
+        const apiData = {
+            status: "success",
+            message: "Welcome to pagesoftwo API",
+            timestamp: new Date().toISOString(),
+            data: {
+                site_info: {
+                    name: "pagesoftwo",
+                    version: "1.0.0",
+                    online: true,
+                    visitor_count: 1254,
+                    last_updated: new Date().toLocaleDateString()
+                },
+                projects: [
+                    {
+                        id: 1,
+                        name: "Pages website",
+                        description: "Interactive website experimenting with HTML/CSS/JS",
+                        status: "active",
+                        tags: ["web", "experiment"]
+                    },
+                    {
+                        id: 2,
+                        name: "Cross-platform API",
+                        description: "Exploring application interaction with configurable options",
+                        status: "in-progress",
+                        tags: ["api", "system"]
+                    },
+                    {
+                        id: 3,
+                        name: "Thought Space",
+                        description: "Personal knowledge management system",
+                        status: "planned",
+                        tags: ["digital-garden", "organization"]
+                    }
+                ],
+                statistics: {
+                    total_visits: 1254,
+                    api_calls: 42,
+                    uptime: "99.8%",
+                    response_time: "125ms"
+                }
+            }
+        };
+        
+        // Function to format JSON with colors
+        function formatJSON(obj) {
+            const json = JSON.stringify(obj, null, 2);
+            return json
+                .replace(/("[\w]+":)/g, '<span class="json-key">$1</span>')
+                .replace(/("[^"]*")/g, '<span class="json-string">$1</span>')
+                .replace(/\b(\d+\.?\d*)\b/g, '<span class="json-number">$1</span>')
+                .replace(/\b(true|false|null)\b/g, '<span class="json-boolean">$1</span>');
+        }
+        
+        // Function to simulate API calls
+        function callAPI(endpoint, method = 'GET', data = null) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    let response;
+                    
+                    switch(endpoint) {
+                        case '/api/data':
+                            response = {
+                                ...apiData,
+                                endpoint: '/api/data',
+                                method: 'GET',
+                                calls: apiData.data.statistics.api_calls += 1
+                            };
+                            break;
+                            
+                        case '/api/projects':
+                            response = {
+                                status: "success",
+                                message: "Projects retrieved successfully",
+                                timestamp: new Date().toISOString(),
+                                count: apiData.data.projects.length,
+                                projects: apiData.data.projects
+                            };
+                            apiData.data.statistics.api_calls += 1;
+                            break;
+                            
+                        case '/api/log':
+                            response = {
+                                status: "success",
+                                message: "Activity logged successfully",
+                                timestamp: new Date().toISOString(),
+                                logged_data: data || { activity: "API test" },
+                                log_id: Math.random().toString(36).substr(2, 9)
+                            };
+                            apiData.data.statistics.api_calls += 1;
+                            break;
+                            
+                        default:
+                            response = {
+                                status: "error",
+                                message: "Endpoint not found",
+                                endpoint: endpoint
+                            };
+                    }
+                    
+                    resolve(response);
+                }, 500); // Simulate network delay
+            });
+        }
+        
+        // Initialize API page
+        function initializeAPI() {
+            // Display example JSON
+            const exampleResponse = document.getElementById('exampleResponse');
+            if (exampleResponse) {
+                exampleResponse.innerHTML = formatJSON(apiData);
+            }
+            
+            // Setup API tester
+            const testButton = document.getElementById('testApi');
+            const testResult = document.getElementById('testResult');
+            const apiEndpoint = document.getElementById('apiEndpoint');
+            
+            if (testButton && testResult) {
+                testButton.addEventListener('click', async () => {
+                    const endpoint = apiEndpoint.value.split(' ')[1]; // Get just the path
+                    const method = apiEndpoint.value.split(' ')[0]; // GET or POST
+                    
+                    testResult.innerHTML = '<div style="color: #888; font-style: italic;">Testing endpoint...</div>';
+                    
+                    try {
+                        const data = method === 'POST' ? { test: true, timestamp: new Date().toISOString() } : null;
+                        const response = await callAPI(endpoint, method, data);
+                        testResult.innerHTML = formatJSON(response);
+                    } catch (error) {
+                        testResult.innerHTML = `<div style="color: #fd79a8;">Error: ${error.message}</div>`;
+                    }
+                });
+            }
+            
+            // Make API available globally for debugging
+            window.pagesoftwoAPI = {
+                getData: () => callAPI('/api/data'),
+                getProjects: () => callAPI('/api/projects'),
+                logActivity: (data) => callAPI('/api/log', 'POST', data),
+                data: apiData
+            };
+            
+            // Log that API is available
+            console.log('pagesoftwo API loaded. Access via window.pagesoftwoAPI');
+        }
+        
+        // Direct link access
+        // To access the API page, use: https://yourdomain.com/#api
+        // To call the API from console: window.pagesoftwoAPI.getData()
+        
+        </script>
     </body>
 </html>
