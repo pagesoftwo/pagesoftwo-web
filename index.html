@@ -172,6 +172,12 @@
             background-clip: text;
             letter-spacing: -1px;
             line-height: 1.1;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .main-title:hover {
+            transform: scale(1.02);
         }
         
         .subtitle {
@@ -415,6 +421,85 @@
             line-height: 1.6;
         }
         
+        /* Secret Easter Egg Page */
+        #secret {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 120px);
+            background: linear-gradient(45deg, #0a0a0a, #1a0a2a);
+            flex-direction: column;
+            gap: 2rem;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .secret-content {
+            max-width: 600px;
+        }
+        
+        .secret-title {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #6c5ce7, #fd79a8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+        }
+        
+        .secret-message {
+            color: #aaa;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .secret-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .secret-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .secret-item:hover {
+            transform: translateY(-5px);
+            border-color: #fd79a8;
+        }
+        
+        .secret-item h3 {
+            color: #6c5ce7;
+            margin-bottom: 0.8rem;
+        }
+        
+        .secret-item p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .back-button {
+            margin-top: 2rem;
+            padding: 0.8rem 2rem;
+            background: rgba(108, 92, 231, 0.2);
+            border: 1px solid #6c5ce7;
+            color: #a29bfe;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(108, 92, 231, 0.4);
+            transform: translateY(-2px);
+        }
+        
         /* Footer */
         .footer {
             text-align: center;
@@ -502,11 +587,15 @@
                 height: 70px;
             }
             
-            .grid-container, .projects-grid {
+            .secret-title {
+                font-size: 2rem;
+            }
+            
+            .grid-container, .projects-grid, .secret-grid {
                 grid-template-columns: 1fr;
             }
             
-            #home, #about, #projects {
+            #home, #about, #projects, #secret {
                 padding: 3rem 1rem;
             }
         }
@@ -675,6 +764,36 @@
                 [  ]
             </div>
         </div>
+
+        <!-- Secret Easter Egg Page -->
+        <div id="secret" class="page">
+            <div class="secret-content">
+                <h1 class="secret-title">you found the secret</h1>
+                <p class="secret-message">
+                    Congratulations explorer! You've discovered the hidden page by clicking "pagesoftwo" 3 times.<br>
+                    This space is reserved for special content, experiments, or anything else that doesn't fit elsewhere.
+                </p>
+                
+                <div class="secret-grid">
+                    <div class="secret-item">
+                        <h3>hidden projects</h3>
+                        <p>Place for work-in-progress or experimental projects that aren't ready for the main page.</p>
+                    </div>
+                    
+                    <div class="secret-item">
+                        <h3>personal notes</h3>
+                        <p>Random thoughts, ideas, or notes that you want to keep but not display publicly.</p>
+                    </div>
+                    
+                    <div class="secret-item">
+                        <h3>easter eggs</h3>
+                        <p>Fun surprises, hidden messages, or interactive experiments for curious visitors.</p>
+                    </div>
+                </div>
+                
+                <button class="back-button" id="backButton">return to home</button>
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->
@@ -686,56 +805,111 @@
         // Tab Navigation
         const tabs = document.querySelectorAll('.tab');
         const pages = document.querySelectorAll('.page');
+        const backButton = document.getElementById('backButton');
+        const mainTitle = document.querySelector('.main-title');
         
+        // Triple click counter for pagesoftwo
+        let clickCount = 0;
+        let clickTimer;
+        
+        // Function to switch pages
+        function switchPage(pageId) {
+            // Remove active class from all tabs and pages
+            tabs.forEach(t => t.classList.remove('active'));
+            pages.forEach(p => p.classList.remove('active'));
+            
+            // Add active class to corresponding tab (if it exists)
+            const tab = document.querySelector(`[data-page="${pageId}"]`);
+            if (tab) {
+                tab.classList.add('active');
+            }
+            
+            // Show corresponding page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Initialize page-specific features
+            if (pageId === 'blank') {
+                initBreathingCircle();
+            }
+        }
+        
+        // Tab click events
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                // Remove active class from all tabs and pages
-                tabs.forEach(t => t.classList.remove('active'));
-                pages.forEach(p => p.classList.remove('active'));
-                
-                // Add active class to clicked tab
-                tab.classList.add('active');
-                
-                // Show corresponding page
                 const pageId = tab.getAttribute('data-page');
-                document.getElementById(pageId).classList.add('active');
+                switchPage(pageId);
             });
+        });
+        
+        // Back button click event
+        backButton.addEventListener('click', () => {
+            switchPage('home');
+        });
+        
+        // Triple click on "pagesoftwo" title
+        mainTitle.addEventListener('click', () => {
+            clickCount++;
+            
+            // Visual feedback
+            mainTitle.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                mainTitle.style.transform = 'scale(1)';
+            }, 200);
+            
+            if (clickCount === 3) {
+                clearTimeout(clickTimer);
+                switchPage('secret');
+                clickCount = 0;
+            } else {
+                clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => {
+                    clickCount = 0;
+                }, 1000); // Reset after 1 second
+            }
         });
         
         // Set current year
         document.getElementById('current-year').textContent = new Date().getFullYear();
         
-        // Mouse move effect for home page
-        document.addEventListener('mousemove', (e) => {
-            const x = e.clientX / window.innerWidth;
-            const y = e.clientY / window.innerHeight;
-            
+        // Mouse move effect for home page (only when home is active)
+        function initHomeMouseEffect() {
             const elements = document.querySelectorAll('.floating-element');
-            elements.forEach((el, index) => {
-                const speed = 0.1 + index * 0.05;
-                const moveX = (x - 0.5) * 100 * speed;
-                const moveY = (y - 0.5) * 100 * speed;
-                el.style.transform = `translate(${moveX}px, ${moveY}px)`;
-            });
-        });
-        
-        // Smooth scroll to top when switching tabs
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        });
-        
-        // Breathing circle interaction
-        const breathingCircle = document.querySelector('.breathing-circle');
-        if (breathingCircle) {
-            breathingCircle.addEventListener('click', function() {
-                this.style.animation = 'none';
-                setTimeout(() => {
-                    this.style.animation = 'breathe 8s infinite ease-in-out';
-                }, 10);
-            });
+            if (elements.length > 0) {
+                document.addEventListener('mousemove', (e) => {
+                    if (!document.getElementById('home').classList.contains('active')) return;
+                    
+                    const x = e.clientX / window.innerWidth;
+                    const y = e.clientY / window.innerHeight;
+                    
+                    elements.forEach((el, index) => {
+                        const speed = 0.1 + index * 0.05;
+                        const moveX = (x - 0.5) * 100 * speed;
+                        const moveY = (y - 0.5) * 100 * speed;
+                        el.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                    });
+                });
+            }
         }
+        
+        // Initialize breathing circle interaction (only for blank page)
+        function initBreathingCircle() {
+            const breathingCircle = document.querySelector('.breathing-circle');
+            if (breathingCircle) {
+                breathingCircle.addEventListener('click', function() {
+                    this.style.animation = 'none';
+                    setTimeout(() => {
+                        this.style.animation = 'breathe 8s infinite ease-in-out';
+                    }, 10);
+                });
+            }
+        }
+        
+        // Initialize
+        initHomeMouseEffect();
+        initBreathingCircle();
     </script>
 </body>
 </html>
