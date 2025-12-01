@@ -1,12 +1,17 @@
-import fetch from "node-fetch";
-
-export const handler = async (event) => {
+export async function handler(event, context) {
   try {
-    const prompt = event.queryStringParameters.prompt || "Hello!";
+    const body = JSON.parse(event.body || "{}");
+    const prompt = body.q || "Hello!";
 
-    const apiKey = process.env.OPENAI_API_KEY; // 🔐 secret key stays hidden!
+    const apiKey = process.env.OPENAI_API_KEY; // 🔥 YOUR ENV VARIABLE
 
-    // Create the request to OpenAI (using gpt-4.1-mini or 5.1 if you prefer)
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "API key missing on server" })
+      };
+    }
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -14,7 +19,7 @@ export const handler = async (event) => {
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-mini",
         messages: [
           { role: "user", content: prompt }
         ]
@@ -25,15 +30,13 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        reply: data.choices?.[0]?.message?.content || "No response"
-      })
+      body: JSON.stringify(data)
     };
 
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: String(err) })
+      body: JSON.stringify({ error: err.message })
     };
   }
-};
+}
