@@ -929,237 +929,274 @@
         </div>
 
         <script>
-        // Tab Navigation
-        const tabs = document.querySelectorAll('.tab');
-        const pages = document.querySelectorAll('.page');
+    // Tab Navigation
+    const tabs = document.querySelectorAll('.tab');
+    const pages = document.querySelectorAll('.page');
+    
+    // Function to switch pages
+    function switchPage(pageId) {
+        // Remove active class from all tabs and pages
+        tabs.forEach(t => t.classList.remove('active'));
+        pages.forEach(p => p.classList.remove('active'));
         
-        // Function to switch pages
-        function switchPage(pageId) {
-            // Remove active class from all tabs and pages
-            tabs.forEach(t => t.classList.remove('active'));
-            pages.forEach(p => p.classList.remove('active'));
-            
-            // Add active class to corresponding tab (if it exists and is not api)
-            const tab = document.querySelector(`[data-page="${pageId}"]`);
-            if (tab && pageId !== 'api') {
-                tab.classList.add('active');
-            }
-            
-            // Show corresponding page
-            document.getElementById(pageId).classList.add('active');
-            
-            // Scroll to top
+        // Add active class to corresponding tab (if it exists and is not api)
+        const tab = document.querySelector(`[data-page="${pageId}"]`);
+        if (tab && pageId !== 'api') {
+            tab.classList.add('active');
+        }
+        
+        // Show corresponding page
+        document.getElementById(pageId).classList.add('active');
+        
+        // Update URL hash (except for home)
+        if (pageId !== 'home') {
+            window.location.hash = pageId;
+        } else {
+            // Remove hash for home page
+            history.replaceState(null, null, ' ');
+        }
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // Tab click events
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const pageId = tab.getAttribute('data-page');
+            switchPage(pageId);
+        });
+    });
+    
+    // Check URL hash on load and when hash changes
+    function handleHashChange() {
+        const hash = window.location.hash.substring(1);
+        
+        // Valid page IDs
+        const validPages = ['home', 'about', 'projects', 'blank', 'api'];
+        
+        if (validPages.includes(hash)) {
+            switchPage(hash);
+        } else {
+            // Default to home if no valid hash
+            switchPage('home');
+        }
+    }
+    
+    // Set up event listeners for hash changes
+    window.addEventListener('load', handleHashChange);
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Also check hash immediately in case page is loaded with hash
+    if (window.location.hash) {
+        handleHashChange();
+    }
+    
+    // Set current year
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+    
+    // Mouse move effect for home page
+    document.addEventListener('mousemove', (e) => {
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+        
+        const elements = document.querySelectorAll('.floating-element');
+        elements.forEach((el, index) => {
+            const speed = 0.1 + index * 0.05;
+            const moveX = (x - 0.5) * 100 * speed;
+            const moveY = (y - 0.5) * 100 * speed;
+            el.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        });
+    });
+    
+    // Smooth scroll to top when switching tabs
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        
-        // Tab click events
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const pageId = tab.getAttribute('data-page');
-                switchPage(pageId);
-            });
         });
-        
-        // Check URL hash on load
-        window.addEventListener('load', () => {
-            const hash = window.location.hash.substring(1);
-            if (hash === 'api') {
-                switchPage('api');
-            }
-            
-            // Initialize API example
-            initializeAPI();
+    });
+    
+    // Breathing circle interaction
+    const breathingCircle = document.querySelector('.breathing-circle');
+    if (breathingCircle) {
+        breathingCircle.addEventListener('click', function() {
+            this.style.animation = 'none';
+            setTimeout(() => {
+                this.style.animation = 'breathe 8s infinite ease-in-out';
+            }, 10);
         });
-        
-        // Set current year
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-        
-        // Mouse move effect for home page
-        document.addEventListener('mousemove', (e) => {
-            const x = e.clientX / window.innerWidth;
-            const y = e.clientY / window.innerHeight;
-            
-            const elements = document.querySelectorAll('.floating-element');
-            elements.forEach((el, index) => {
-                const speed = 0.1 + index * 0.05;
-                const moveX = (x - 0.5) * 100 * speed;
-                const moveY = (y - 0.5) * 100 * speed;
-                el.style.transform = `translate(${moveX}px, ${moveY}px)`;
-            });
-        });
-        
-        // Smooth scroll to top when switching tabs
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        });
-        
-        // Breathing circle interaction
-        const breathingCircle = document.querySelector('.breathing-circle');
-        if (breathingCircle) {
-            breathingCircle.addEventListener('click', function() {
-                this.style.animation = 'none';
-                setTimeout(() => {
-                    this.style.animation = 'breathe 8s infinite ease-in-out';
-                }, 10);
-            });
-        }
+    }
 
-        // ========== HIDDEN API FUNCTIONALITY ==========
-        
-        // Your API data
-        const apiData = {
-            status: "success",
-            message: "Welcome to pagesoftwo API",
-            timestamp: new Date().toISOString(),
-            data: {
-                site_info: {
-                    name: "pagesoftwo",
-                    version: "1.0.0",
-                    online: true,
-                    visitor_count: 1254,
-                    last_updated: new Date().toLocaleDateString()
+    // ========== HIDDEN API FUNCTIONALITY ==========
+    
+    // Your API data
+    const apiData = {
+        status: "success",
+        message: "Welcome to pagesoftwo API",
+        timestamp: new Date().toISOString(),
+        data: {
+            site_info: {
+                name: "pagesoftwo",
+                version: "1.0.0",
+                online: true,
+                visitor_count: 1254,
+                last_updated: new Date().toLocaleDateString()
+            },
+            projects: [
+                {
+                    id: 1,
+                    name: "Pages website",
+                    description: "Interactive website experimenting with HTML/CSS/JS",
+                    status: "active",
+                    tags: ["web", "experiment"]
                 },
-                projects: [
-                    {
-                        id: 1,
-                        name: "Pages website",
-                        description: "Interactive website experimenting with HTML/CSS/JS",
-                        status: "active",
-                        tags: ["web", "experiment"]
-                    },
-                    {
-                        id: 2,
-                        name: "Cross-platform API",
-                        description: "Exploring application interaction with configurable options",
-                        status: "in-progress",
-                        tags: ["api", "system"]
-                    },
-                    {
-                        id: 3,
-                        name: "Thought Space",
-                        description: "Personal knowledge management system",
-                        status: "planned",
-                        tags: ["digital-garden", "organization"]
-                    }
-                ],
-                statistics: {
-                    total_visits: 1254,
-                    api_calls: 42,
-                    uptime: "99.8%",
-                    response_time: "125ms"
+                {
+                    id: 2,
+                    name: "Cross-platform API",
+                    description: "Exploring application interaction with configurable options",
+                    status: "in-progress",
+                    tags: ["api", "system"]
+                },
+                {
+                    id: 3,
+                    name: "Thought Space",
+                    description: "Personal knowledge management system",
+                    status: "planned",
+                    tags: ["digital-garden", "organization"]
                 }
+            ],
+            statistics: {
+                total_visits: 1254,
+                api_calls: 42,
+                uptime: "99.8%",
+                response_time: "125ms"
             }
+        }
+    };
+    
+    // Function to format JSON with colors
+    function formatJSON(obj) {
+        const json = JSON.stringify(obj, null, 2);
+        return json
+            .replace(/("[\w]+":)/g, '<span class="json-key">$1</span>')
+            .replace(/("[^"]*")/g, '<span class="json-string">$1</span>')
+            .replace(/\b(\d+\.?\d*)\b/g, '<span class="json-number">$1</span>')
+            .replace(/\b(true|false|null)\b/g, '<span class="json-boolean">$1</span>');
+    }
+    
+    // Function to simulate API calls
+    function callAPI(endpoint, method = 'GET', data = null) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                let response;
+                
+                switch(endpoint) {
+                    case '/api/data':
+                        response = {
+                            ...apiData,
+                            endpoint: '/api/data',
+                            method: 'GET',
+                            calls: apiData.data.statistics.api_calls += 1
+                        };
+                        break;
+                        
+                    case '/api/projects':
+                        response = {
+                            status: "success",
+                            message: "Projects retrieved successfully",
+                            timestamp: new Date().toISOString(),
+                            count: apiData.data.projects.length,
+                            projects: apiData.data.projects
+                        };
+                        apiData.data.statistics.api_calls += 1;
+                        break;
+                        
+                    case '/api/log':
+                        response = {
+                            status: "success",
+                            message: "Activity logged successfully",
+                            timestamp: new Date().toISOString(),
+                            logged_data: data || { activity: "API test" },
+                            log_id: Math.random().toString(36).substr(2, 9)
+                        };
+                        apiData.data.statistics.api_calls += 1;
+                        break;
+                        
+                    default:
+                        response = {
+                            status: "error",
+                            message: "Endpoint not found",
+                            endpoint: endpoint
+                        };
+                }
+                
+                resolve(response);
+            }, 500); // Simulate network delay
+        });
+    }
+    
+    // Initialize API page
+    function initializeAPI() {
+        // Display example JSON
+        const exampleResponse = document.getElementById('exampleResponse');
+        if (exampleResponse) {
+            exampleResponse.innerHTML = formatJSON(apiData);
+        }
+        
+        // Setup API tester
+        const testButton = document.getElementById('testApi');
+        const testResult = document.getElementById('testResult');
+        const apiEndpoint = document.getElementById('apiEndpoint');
+        
+        if (testButton && testResult) {
+            testButton.addEventListener('click', async () => {
+                const endpoint = apiEndpoint.value.split(' ')[1]; // Get just the path
+                const method = apiEndpoint.value.split(' ')[0]; // GET or POST
+                
+                testResult.innerHTML = '<div style="color: #888; font-style: italic;">Testing endpoint...</div>';
+                
+                try {
+                    const data = method === 'POST' ? { test: true, timestamp: new Date().toISOString() } : null;
+                    const response = await callAPI(endpoint, method, data);
+                    testResult.innerHTML = formatJSON(response);
+                } catch (error) {
+                    testResult.innerHTML = `<div style="color: #fd79a8;">Error: ${error.message}</div>`;
+                }
+            });
+        }
+        
+        // Make API available globally for debugging
+        window.pagesoftwoAPI = {
+            getData: () => callAPI('/api/data'),
+            getProjects: () => callAPI('/api/projects'),
+            logActivity: (data) => callAPI('/api/log', 'POST', data),
+            data: apiData
         };
         
-        // Function to format JSON with colors
-        function formatJSON(obj) {
-            const json = JSON.stringify(obj, null, 2);
-            return json
-                .replace(/("[\w]+":)/g, '<span class="json-key">$1</span>')
-                .replace(/("[^"]*")/g, '<span class="json-string">$1</span>')
-                .replace(/\b(\d+\.?\d*)\b/g, '<span class="json-number">$1</span>')
-                .replace(/\b(true|false|null)\b/g, '<span class="json-boolean">$1</span>');
+        // Log that API is available
+        console.log('pagesoftwo API loaded. Access via window.pagesoftwoAPI');
+    }
+    
+    // Initialize API when API page is shown
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check if we're on the API page
+        if (window.location.hash === '#api') {
+            setTimeout(initializeAPI, 100);
         }
         
-        // Function to simulate API calls
-        function callAPI(endpoint, method = 'GET', data = null) {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    let response;
-                    
-                    switch(endpoint) {
-                        case '/api/data':
-                            response = {
-                                ...apiData,
-                                endpoint: '/api/data',
-                                method: 'GET',
-                                calls: apiData.data.statistics.api_calls += 1
-                            };
-                            break;
-                            
-                        case '/api/projects':
-                            response = {
-                                status: "success",
-                                message: "Projects retrieved successfully",
-                                timestamp: new Date().toISOString(),
-                                count: apiData.data.projects.length,
-                                projects: apiData.data.projects
-                            };
-                            apiData.data.statistics.api_calls += 1;
-                            break;
-                            
-                        case '/api/log':
-                            response = {
-                                status: "success",
-                                message: "Activity logged successfully",
-                                timestamp: new Date().toISOString(),
-                                logged_data: data || { activity: "API test" },
-                                log_id: Math.random().toString(36).substr(2, 9)
-                            };
-                            apiData.data.statistics.api_calls += 1;
-                            break;
-                            
-                        default:
-                            response = {
-                                status: "error",
-                                message: "Endpoint not found",
-                                endpoint: endpoint
-                            };
-                    }
-                    
-                    resolve(response);
-                }, 500); // Simulate network delay
-            });
-        }
-        
-        // Initialize API page
-        function initializeAPI() {
-            // Display example JSON
-            const exampleResponse = document.getElementById('exampleResponse');
-            if (exampleResponse) {
-                exampleResponse.innerHTML = formatJSON(apiData);
+        // Also initialize when page changes to API
+        const observer = new MutationObserver(() => {
+            if (document.getElementById('api')?.classList.contains('active')) {
+                initializeAPI();
             }
-            
-            // Setup API tester
-            const testButton = document.getElementById('testApi');
-            const testResult = document.getElementById('testResult');
-            const apiEndpoint = document.getElementById('apiEndpoint');
-            
-            if (testButton && testResult) {
-                testButton.addEventListener('click', async () => {
-                    const endpoint = apiEndpoint.value.split(' ')[1]; // Get just the path
-                    const method = apiEndpoint.value.split(' ')[0]; // GET or POST
-                    
-                    testResult.innerHTML = '<div style="color: #888; font-style: italic;">Testing endpoint...</div>';
-                    
-                    try {
-                        const data = method === 'POST' ? { test: true, timestamp: new Date().toISOString() } : null;
-                        const response = await callAPI(endpoint, method, data);
-                        testResult.innerHTML = formatJSON(response);
-                    } catch (error) {
-                        testResult.innerHTML = `<div style="color: #fd79a8;">Error: ${error.message}</div>`;
-                    }
-                });
-            }
-            
-            // Make API available globally for debugging
-            window.pagesoftwoAPI = {
-                getData: () => callAPI('/api/data'),
-                getProjects: () => callAPI('/api/projects'),
-                logActivity: (data) => callAPI('/api/log', 'POST', data),
-                data: apiData
-            };
-            
-            // Log that API is available
-            console.log('pagesoftwo API loaded. Access via window.pagesoftwoAPI');
-        }
+        });
         
-        // Direct link access
-        // To access the API page, use: https://yourdomain.com/#api
-        // To call the API from console: window.pagesoftwoAPI.getData()
-        
-        </script>
+        observer.observe(document.getElementById('api'), { 
+            attributes: true, 
+            attributeFilter: ['class'] 
+        });
+    });
+    
+</script>
     </body>
 </html>
