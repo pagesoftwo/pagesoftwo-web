@@ -2,59 +2,79 @@
 import subprocess
 import sys
 import os
+import threading
+import time
 import webbrowser
-from time import sleep
+from flask import Flask, send_from_directory
+
+def start_api():
+    """Start the Flask API server"""
+    print("🚀 Starting API server on port 5000...")
+    os.chdir('api')
+    subprocess.run([sys.executable, 'app.py'])
+
+def start_website():
+    """Start the website server"""
+    print("🌐 Starting website server on port 8000...")
+    os.chdir('..')
+    
+    # Create a simple Flask server to serve index.html
+    app = Flask(__name__, static_folder='.', static_url_path='')
+    
+    @app.route('/')
+    def serve_index():
+        return send_from_directory('.', 'index.html')
+    
+    @app.route('/<path:path>')
+    def serve_static(path):
+        return send_from_directory('.', path)
+    
+    print("✅ Website running at: http://localhost:8000")
+    print("✅ API running at: http://localhost:5000")
+    print("\n📊 Open your browser to: http://localhost:8000")
+    print("🔧 API documentation: http://localhost:5000")
+    print("🔗 Hidden API page: http://localhost:8000/#api")
+    print("\n🛑 Press Ctrl+C to stop both servers")
+    
+    app.run(host='0.0.0.0', port=8000, debug=False, use_reloader=False)
 
 def main():
     print("=" * 50)
-    print("PAGESOFTWO WEBSITE & API")
+    print("       PAGESOFTWO WEBSITE + API")
     print("=" * 50)
     
-    # Check Python version
-    print(f"Python version: {sys.version.split()[0]}")
-    
-    # Install dependencies
-    print("\n[1/3] Installing dependencies...")
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-        print("✓ Dependencies installed")
-    except subprocess.CalledProcessError:
-        print("✗ Failed to install dependencies")
-        print("Try running: pip install -r requirements.txt")
+    # Check if we're in the right directory
+    if not os.path.exists('api/app.py'):
+        print("❌ Error: api/app.py not found!")
+        print("💡 Make sure you're in the pagesoftwo-web folder")
         return
     
-    # Start API server
-    print("\n[2/3] Starting API server...")
-    api_process = subprocess.Popen([sys.executable, "api/app.py"])
-    
-    # Wait for API to start
-    sleep(3)
-    
-    # Open website
-    print("\n[3/3] Opening website...")
-    print("\n" + "=" * 50)
-    print("SERVERS RUNNING:")
-    print("- Website: http://localhost:8000")
-    print("- API:     http://localhost:5000")
-    print("- API Docs: http://localhost:5000/")
-    print("\nENDPOINTS:")
-    print("- GET /api/data      - All site data")
-    print("- GET /api/projects  - Projects list")
-    print("- GET /api/stats     - Statistics")
-    print("- POST /api/visitors - Increment visitors")
-    print("- POST /api/log      - Add log entry")
-    print("=" * 50)
-    
-    # Start simple HTTP server for website
-    print("\nStarting website server (Ctrl+C to stop all)...")
+    # Install dependencies
+    print("\n📦 Installing dependencies...")
     try:
-        # For Python 3.x
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
-        subprocess.call([sys.executable, "-m", "http.server", "8000"])
-    except KeyboardInterrupt:
-        print("\nShutting down...")
-        api_process.terminate()
-        api_process.wait()
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+        print("✅ Dependencies installed")
+    except:
+        print("⚠️  Could not install dependencies automatically")
+        print("💡 Try running: pip install -r requirements.txt")
+    
+    # Start API in a separate thread
+    api_thread = threading.Thread(target=start_api, daemon=True)
+    api_thread.start()
+    
+    # Wait a moment for API to start
+    time.sleep(2)
+    
+    # Open browser
+    print("\n🌍 Opening browser...")
+    webbrowser.open('http://localhost:8000')
+    
+    # Start website (this will block)
+    start_website()
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\n👋 Shutting down...")
+        sys.exit(0)

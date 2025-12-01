@@ -11,8 +11,8 @@ CORS(app)  # Allow all origins
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, 'data.json')
 
-# Initialize data file
 def init_data():
+    """Initialize data file with default values"""
     if not os.path.exists(DATA_FILE):
         default_data = {
             "site_info": {
@@ -36,13 +36,6 @@ def init_data():
                     "description": "Exploring application interaction with configurable options",
                     "status": "in-progress",
                     "tags": ["api", "system"]
-                },
-                {
-                    "id": 3,
-                    "name": "Thought Space",
-                    "description": "Personal knowledge management system",
-                    "status": "planned",
-                    "tags": ["digital-garden", "organization"]
                 }
             ],
             "statistics": {
@@ -54,13 +47,19 @@ def init_data():
             "logs": []
         }
         save_data(default_data)
-        print(f"✓ Created data file: {DATA_FILE}")
+        print(f"📁 Created data file: {DATA_FILE}")
 
 def load_data():
-    with open(DATA_FILE, 'r') as f:
-        return json.load(f)
+    """Load data from JSON file"""
+    try:
+        with open(DATA_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        init_data()
+        return load_data()
 
 def save_data(data):
+    """Save data to JSON file"""
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
@@ -69,6 +68,7 @@ init_data()
 
 @app.route('/')
 def home():
+    """API homepage with documentation"""
     data = load_data()
     data['statistics']['api_calls'] += 1
     save_data(data)
@@ -77,6 +77,7 @@ def home():
         "status": "success",
         "message": "Welcome to pagesoftwo API",
         "version": "1.0.0",
+        "website": "http://localhost:8000",
         "endpoints": {
             "/api/data": "GET - All site data",
             "/api/projects": "GET - Projects list",
@@ -90,6 +91,7 @@ def home():
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
+    """Get all site data"""
     data = load_data()
     data['statistics']['api_calls'] += 1
     data['site_info']['last_updated'] = datetime.now().isoformat()
@@ -103,6 +105,7 @@ def get_data():
 
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
+    """Get projects list"""
     data = load_data()
     data['statistics']['api_calls'] += 1
     save_data(data)
@@ -116,6 +119,7 @@ def get_projects():
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
+    """Get statistics"""
     data = load_data()
     data['statistics']['api_calls'] += 1
     save_data(data)
@@ -128,13 +132,14 @@ def get_stats():
 
 @app.route('/api/visitors', methods=['GET', 'POST'])
 def visitors():
+    """Handle visitor count"""
     data = load_data()
     data['statistics']['api_calls'] += 1
     
     if request.method == 'POST':
         data['site_info']['visitor_count'] += 1
         data['statistics']['total_visits'] += 1
-        print(f"✓ Visitor count: {data['site_info']['visitor_count']}")
+        print(f"👤 Visitor count: {data['site_info']['visitor_count']}")
     
     save_data(data)
     
@@ -147,6 +152,7 @@ def visitors():
 
 @app.route('/api/log', methods=['POST'])
 def add_log():
+    """Add log entry"""
     try:
         log_data = request.json
         data = load_data()
@@ -161,8 +167,6 @@ def add_log():
         data['logs'].append(log_entry)
         save_data(data)
         
-        print(f"✓ Log added: {log_entry['id']}")
-        
         return jsonify({
             "status": "success",
             "message": "Log entry added",
@@ -171,7 +175,6 @@ def add_log():
         })
         
     except Exception as e:
-        print(f"✗ Log error: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -179,6 +182,7 @@ def add_log():
 
 @app.route('/api/status', methods=['GET'])
 def status():
+    """API status check"""
     return jsonify({
         "status": "online",
         "service": "pagesoftwo API",
@@ -188,17 +192,21 @@ def status():
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("PAGESOFTWO API SERVER")
+    print("       PAGESOFTWO API SERVER")
     print("=" * 50)
-    print(f"Data file: {DATA_FILE}")
-    print("\nEndpoints:")
+    print(f"📂 Data file: {DATA_FILE}")
+    print("🔗 Website: http://localhost:8000")
+    print("\n📡 API Endpoints:")
     print("  http://localhost:5000/")
     print("  http://localhost:5000/api/data")
     print("  http://localhost:5000/api/projects")
     print("  http://localhost:5000/api/stats")
     print("  http://localhost:5000/api/visitors")
     print("  http://localhost:5000/api/status")
-    print("\nPress Ctrl+C to stop")
+    print("\n🛑 Press Ctrl+C to stop")
     print("=" * 50)
     
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    try:
+        app.run(debug=False, port=5000, host='0.0.0.0')
+    except KeyboardInterrupt:
+        print("\n👋 API server stopped")
