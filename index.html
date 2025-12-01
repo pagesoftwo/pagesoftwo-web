@@ -716,6 +716,15 @@
                 id="current-year">2024</span>
         </div>
 
+        <!-- AI Chat UI Box -->
+        <div id="ai-box">
+        <input id="ai-input" placeholder="Type message..." />
+        <button id="ai-send">Send</button>
+        <div id="ai-output"></div>
+        </div>
+
+
+
         <script>
         // Tab Navigation
         const tabs = document.querySelectorAll('.tab');
@@ -771,54 +780,13 @@
             });
         }
 
-        <!-- AI Chat UI Box -->
-<div id="ai-box" style="
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 320px;
-    background: rgba(20,20,20,0.9);
-    border: 1px solid #222;
-    border-radius: 12px;
-    padding: 1rem;
-    backdrop-filter: blur(10px);
-    z-index: 2000;
-">
-    <h3 style="margin-bottom: 0.5rem; color: #fff; font-size: 1.1rem;">AI Assistant</h3>
+        document.getElementById("ai-send").addEventListener("click", async () => {
+    const msg = document.getElementById("ai-input").value;
+    if (!msg) return;
+    const reply = await askOpenAI(msg);
+    document.getElementById("ai-output").innerText = reply;
+});
 
-    <div id="ai-output" style="
-        min-height: 80px;
-        max-height: 200px;
-        overflow-y: auto;
-        color: #aaa;
-        font-size: 0.9rem;
-        margin-bottom: 0.8rem;
-        border: 1px solid #333;
-        padding: 0.5rem;
-        border-radius: 6px;
-    "></div>
-
-    <input id="ai-input" type="text" placeholder="Ask something..."
-        style="
-        width: 100%;
-        padding: 0.6rem;
-        border-radius: 6px;
-        border: 1px solid #333;
-        background: #111;
-        color: #eee;
-        margin-bottom: 0.5rem;
-    ">
-
-    <button id="ai-send" style="
-        width: 100%;
-        padding: 0.6rem;
-        background: #6c5ce7;
-        border: none;
-        border-radius: 6px;
-        color: white;
-        cursor: pointer;
-    ">Send</button>
-</div>
 
     </script>
     </body>
