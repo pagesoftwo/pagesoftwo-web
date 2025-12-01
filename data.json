@@ -1,0 +1,38 @@
+{
+  "site_info": {
+    "name": "pagesoftwo",
+    "version": "1.0.0",
+    "online": true,
+    "visitor_count": 0,
+    "last_updated": "2025-12-01T18:41:33.200178"
+  },
+  "projects": [
+    {
+      "id": 1,
+      "name": "Pages website",
+      "description": "Interactive website experimenting with HTML/CSS/JS",
+      "status": "active",
+      "tags": [
+        "web",
+        "experiment"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Cross-platform API",
+      "description": "Exploring application interaction with configurable options",
+      "status": "in-progress",
+      "tags": [
+        "api",
+        "system"
+      ]
+    }
+  ],
+  "statistics": {
+    "total_visits": 0,
+    "api_calls": 0,
+    "uptime": "99.8%",
+    "response_time": "125ms"
+  },
+  "logs": []
+}

@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>PagesOfTwo</title>
-        <link rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PagesOfTwo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
         /* Reset & Base */
         * {
             margin: 0;
@@ -220,6 +219,103 @@
             color: #aaa;
         }
         
+        /* Real API Data Display */
+        .api-data {
+            background: rgba(20, 20, 20, 0.7);
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 600px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        .api-title {
+            color: #6c5ce7;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .api-content {
+            color: #aaa;
+            line-height: 1.6;
+        }
+        
+        .api-stats {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 0.3rem;
+        }
+        
+        .refresh-button {
+            margin-top: 1.5rem;
+            padding: 0.6rem 1.5rem;
+            background: rgba(108, 92, 231, 0.2);
+            border: 1px solid #6c5ce7;
+            color: #a29bfe;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .refresh-button:hover {
+            background: rgba(108, 92, 231, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            color: #888;
+            font-style: italic;
+        }
+        
+        .error {
+            color: #fd79a8;
+            background: rgba(253, 121, 168, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(253, 121, 168, 0.3);
+        }
+        
+        .quote-box {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #333;
+        }
+        
+        .status-indicator {
+            color: #888;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
         /* Grid Dashboard */
         .dashboard-grid {
             padding: 4rem 2rem;
@@ -416,7 +512,7 @@
             line-height: 1.6;
         }
         
-        /* Hidden API Page - Not in menu */
+        /* Hidden API Page */
         #api {
             padding: 6rem 2rem;
             max-width: 1200px;
@@ -687,516 +783,585 @@
             background: #444;
         }
     </style>
-    </head>
-    <body>
-        <!-- Minimal Tabs -->
-        <div class="tabs">
-            <div class="tabs-container">
-                <div class="tab active" data-page="home">
-                    <span class="tab-icon">⌂</span> home
-                </div>
-                <div class="tab" data-page="about">
-                    <span class="tab-icon">⍺</span> about
-                </div>
-                <div class="tab" data-page="projects">
-                    <span class="tab-icon">⟁</span> projects
-                </div>
-                <div class="tab" data-page="blank">
-                    <span class="tab-icon">␀</span> blank
-                </div>
+</head>
+<body>
+    <!-- Minimal Tabs -->
+    <div class="tabs">
+        <div class="tabs-container">
+            <div class="tab active" data-page="home">
+                <span class="tab-icon">⌂</span> home
+            </div>
+            <div class="tab" data-page="about">
+                <span class="tab-icon">⍺</span> about
+            </div>
+            <div class="tab" data-page="projects">
+                <span class="tab-icon">⟁</span> projects
+            </div>
+            <div class="tab" data-page="blank">
+                <span class="tab-icon">␀</span> blank
             </div>
         </div>
+    </div>
 
-        <!-- Content Area -->
-        <div class="content">
-            <!-- Home Page - Digital Canvas -->
-            <div id="home" class="page active">
-                <div class="hero-canvas">
-                    <div class="floating-elements">
-                        <div class="floating-element"></div>
-                        <div class="floating-element"></div>
-                        <div class="floating-element"></div>
-                    </div>
-
-                    <div class="center-content">
-                        <h1 class="main-title">pagesoftwo</h1>
-                        <p class="subtitle">digital space for <span
-                                class="highlight">creative exploration</span>
-                            and <span class="highlight">limitless
-                                imagination</span></p>
-
-                        <div class="status-bar">
-                            <div class="status-item">
-                                <div class="status-dot"></div>
-                                <span class="status-text">currently
-                                    online</span>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-dot"
-                                    style="background: #6c5ce7;"></div>
-                                <span class="status-text">thinking about
-                                    design</span>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-dot"
-                                    style="background: #fd79a8;"></div>
-                                <span class="status-text">thoughts that
-                                    intertwine</span>
-                            </div>
-                        </div>
-                    </div>
+    <!-- Content Area -->
+    <div class="content">
+        <!-- Home Page - Digital Canvas -->
+        <div id="home" class="page active">
+            <div class="hero-canvas">
+                <div class="floating-elements">
+                    <div class="floating-element"></div>
+                    <div class="floating-element"></div>
+                    <div class="floating-element"></div>
                 </div>
-
-                <div class="dashboard-grid">
-                    <h2 class="grid-title">digital footprints</h2>
-                    <div class="grid-container">
-                        <div class="grid-item">
-                            <div class="item-icon">✎</div>
-                            <h3 class="item-title">This site</h3>
-                            <p class="item-desc">This is the first website i've
-                                ever created so don't expect much yet but there
-                                will be some to come.</p>
+                
+                <div class="center-content">
+                    <h1 class="main-title">pagesoftwo</h1>
+                    <p class="subtitle">digital space for <span class="highlight">creative exploration</span> and <span class="highlight">limitless imagination</span></p>
+                    
+                    <div class="status-bar">
+                        <div class="status-item">
+                            <div class="status-dot"></div>
+                            <span class="status-text">currently online</span>
                         </div>
-
-                        <div class="grid-item">
-                            <div class="item-icon">⟡</div>
-                            <h3 class="item-title">Creating</h3>
-                            <p class="item-desc">Building digital experiences
-                                and experimenting with new tools and ideas to
-                                follow.</p>
+                        <div class="status-item">
+                            <div class="status-dot" style="background: #6c5ce7;"></div>
+                            <span class="status-text">thinking about design</span>
                         </div>
-
-                        <div class="grid-item">
-                            <div class="item-icon">?</div>
-                            <h3 class="item-title">Learning</h3>
-                            <p class="item-desc">Everything is a learning
-                                experience so always try to make stuff better as
-                                you go until it fits your needs.</p>
-                        </div>
-
-                        <div class="grid-item">
-                            <div class="item-icon">⊚</div>
-                            <h3 class="item-title">Exploring</h3>
-                            <p class="item-desc">Yes, the internet isn't always
-                                safe but explore your options of learning and
-                                projects you can make.</p>
+                        <div class="status-item">
+                            <div class="status-dot" style="background: #fd79a8;"></div>
+                            <span class="status-text">thoughts that intertwine</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- About Page -->
-            <div id="about" class="page">
-                <div class="minimal-card">
-                    <h2>About Me</h2>
-                    <p>pagesoftwo represents two things. Life is better with
-                        other people, and you are the writer and reader of
-                        life.</p>
-                    <p>This space serves as a living document of exploration. A
-                        collection of thoughts, experiments, and
-                        reflections.</p>
-                    <p>Believer in minimal design, intentional creation, and the
-                        power of blank space. Currently based in the digital
-                        ether.</p>
-                    <p>Much love to my biggest supporters | S, M, X</p>
+            
+            <!-- Real API Data Display -->
+            <div class="api-data" id="apiData">
+                <h3 class="api-title">
+                    <i class="fas fa-database"></i> Real API Connection
+                </h3>
+                <div class="api-content" id="apiContent">
+                    <div class="loading">Connecting to API...</div>
                 </div>
-
-                <div class="minimal-card">
-                    <h2>Current Focus</h2>
-                    <p>▶ <span class="highlight">Digital Minimalism:</span>
-                        Reducing Distractions and getting stuff done.</p>
-                    <p>▶ <span class="highlight">Creative Coding:</span>
-                        Exploring python, web development and api.</p>
-                    <p>▶ <span class="highlight">Systems Design:</span> Building
-                        mini projects for personal education.</p>
-                    <p>▶ <span class="highlight">Operating Systems:</span>
-                        Experimenting with kali.</p>
-                    <p>▶ <span class="highlight">Typography:</span>
-                        Experimenting with type on the web</p>
-                </div>
+                <button class="refresh-button" id="refreshAPI">
+                    <i class="fas fa-sync-alt"></i> Refresh API Data
+                </button>
+                <div id="apiTestResult" style="margin-top: 1rem; font-size: 0.85rem;"></div>
             </div>
-
-            <!-- Projects Page -->
-            <div id="projects" class="page">
-                <div class="projects-grid">
-                    <div class="project-card">
-                        <span class="project-tag">web experiment</span>
-                        <h3>Pages website</h3>
-                        <p>An interactive website experimenting with html.</p>
-                    </div>
-
-                    <div class="project-card">
-                        <span class="project-tag">api system</span>
-                        <h3>Cross-platform api</h3>
-                        <p>Exploring interaction from one application to another
-                            with configurable options.</p>
-                    </div>
-
-                    <div class="project-card">
-                        <span class="project-tag">digital garden</span>
-                        <h3>Thought Space</h3>
-                        <p>Personal knowledge management system for organizing
-                            ideas, notes, and connections between concepts.</p>
-                    </div>
-
-                    <div class="project-card">
-                        <span class="project-tag">tool</span>
-                        <h3>Messages</h3>
-                        <p>Sending messages between multiple social platforms
-                            with a simple menu and minimal clicks.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Blank Page - Breathing Space -->
-            <div id="blank" class="page">
-                <div class="breathing-circle"></div>
-                <div class="breath-instruction">
-                    breathe in • breathe out
-                </div>
-                <div class="blank-message">
-                    digital meditation space<br>
-                    _<br>
-                    clear your mind<br>
-                    _<br>
-                    focus on your breath<br>
-                    _<br>
-                    [ ]
-                </div>
-            </div>
-
-            <!-- Hidden API Page - Not in menu, accessible by direct link -->
-            <div id="api" class="page">
-                <div class="api-container">
-                    <div class="api-docs">
-                        <h2>pagesoftwo API</h2>
-                        <p>Welcome to the hidden API interface. This page is not linked in the navigation and can only be accessed via direct URL.</p>
-                        
-                        <h3>Available Endpoints</h3>
-                        
-                        <div class="api-endpoint">
-                            <span class="endpoint-method">GET</span>
-                            <code>/api/data</code>
-                            <p style="margin-top: 0.5rem; color: #aaa;">Returns basic site information and statistics</p>
-                        </div>
-                        
-                        <div class="api-endpoint">
-                            <span class="endpoint-method">GET</span>
-                            <code>/api/projects</code>
-                            <p style="margin-top: 0.5rem; color: #aaa;">Returns list of current projects</p>
-                        </div>
-                        
-                        <div class="api-endpoint">
-                            <span class="endpoint-method">POST</span>
-                            <code>/api/log</code>
-                            <p style="margin-top: 0.5rem; color: #aaa;">Logs activity (requires authentication)</p>
-                        </div>
-                        
-                        <h3>Example Response</h3>
-                        <div class="api-response" id="exampleResponse">
-                            <!-- JSON will be displayed here -->
-                        </div>
+            
+            <div class="dashboard-grid">
+                <h2 class="grid-title">digital footprints</h2>
+                <div class="grid-container">
+                    <div class="grid-item">
+                        <div class="item-icon">✎</div>
+                        <h3 class="item-title">This site</h3>
+                        <p class="item-desc">This is the first website i've ever created so don't expect much yet but there will be some to come.</p>
                     </div>
                     
-                    <div class="api-tester">
-                        <h3>API Tester</h3>
-                        <div class="test-controls">
-                            <select class="api-select" id="apiEndpoint">
-                                <option value="/api/data">GET /api/data</option>
-                                <option value="/api/projects">GET /api/projects</option>
-                                <option value="/api/log">POST /api/log</option>
-                            </select>
-                            <button class="test-button" id="testApi">Test Endpoint</button>
-                        </div>
-                        <div class="test-result" id="testResult">
-                            <div style="color: #888; font-style: italic;">Click "Test Endpoint" to see results</div>
-                        </div>
+                    <div class="grid-item">
+                        <div class="item-icon">⟡</div>
+                        <h3 class="item-title">Creating</h3>
+                        <p class="item-desc">Building digital experiences and experimenting with new tools and ideas to follow.</p>
                     </div>
-                </div>
-                
-                <div class="api-note">
-                    <h4>Note</h4>
-                    <p>This is a mock API running entirely in your browser. For a real API, you would need a backend server. To share this page, use the direct URL: <code>https://yourdomain.com/#api</code></p>
-                    <p style="margin-top: 0.8rem; font-size: 0.9rem;">API calls are simulated and data is stored locally in your browser.</p>
+                    
+                    <div class="grid-item">
+                        <div class="item-icon">?</div>
+                        <h3 class="item-title">Learning</h3>
+                        <p class="item-desc">Everything is a learning experience so always try to make stuff better as you go until it fits your needs.</p>
+                    </div>
+                    
+                    <div class="grid-item">
+                        <div class="item-icon">⊚</div>
+                        <h3 class="item-title">Exploring</h3>
+                        <p class="item-desc">Yes, the internet isn't always safe but explore your options of learning and projects you can make.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="footer">
-            pagesoftwo • digital minimalism • © <span
-                id="current-year">2024</span>
+        <!-- About Page -->
+        <div id="about" class="page">
+            <div class="minimal-card">
+                <h2>About Me</h2>
+                <p>pagesoftwo represents two things. Life is better with other people, and you are the writer and reader of life.</p>
+                <p>This space serves as a living document of exploration. A collection of thoughts, experiments, and reflections.</p>
+                <p>Believer in minimal design, intentional creation, and the power of blank space. Currently based in the digital ether.</p>
+                <p>Much love to my biggest supporters | S, M, X</p>
+            </div>
+            
+            <div class="minimal-card">
+                <h2>Current Focus</h2>
+                <p>▶ <span class="highlight">Digital Minimalism:</span> Reducing Distractions and getting stuff done.</p>
+                <p>▶ <span class="highlight">Creative Coding:</span> Exploring python, web development and api.</p>
+                <p>▶ <span class="highlight">Systems Design:</span> Building mini projects for personal education.</p>
+                <p>▶ <span class="highlight">Operating Systems:</span> Experimenting with kali.</p>
+                <p>▶ <span class="highlight">Typography:</span> Experimenting with type on the web</p>
+            </div>
         </div>
 
-        <script>
-    // Tab Navigation
-    const tabs = document.querySelectorAll('.tab');
-    const pages = document.querySelectorAll('.page');
-    
-    // Function to switch pages
-    function switchPage(pageId) {
-        // Remove active class from all tabs and pages
-        tabs.forEach(t => t.classList.remove('active'));
-        pages.forEach(p => p.classList.remove('active'));
-        
-        // Add active class to corresponding tab (if it exists and is not api)
-        const tab = document.querySelector(`[data-page="${pageId}"]`);
-        if (tab && pageId !== 'api') {
-            tab.classList.add('active');
-        }
-        
-        // Show corresponding page
-        document.getElementById(pageId).classList.add('active');
-        
-        // Update URL hash (except for home)
-        if (pageId !== 'home') {
-            window.location.hash = pageId;
-        } else {
-            // Remove hash for home page
-            history.replaceState(null, null, ' ');
-        }
-        
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    // Tab click events
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const pageId = tab.getAttribute('data-page');
-            switchPage(pageId);
-        });
-    });
-    
-    // Check URL hash on load and when hash changes
-    function handleHashChange() {
-        const hash = window.location.hash.substring(1);
-        
-        // Valid page IDs
-        const validPages = ['home', 'about', 'projects', 'blank', 'api'];
-        
-        if (validPages.includes(hash)) {
-            switchPage(hash);
-        } else {
-            // Default to home if no valid hash
-            switchPage('home');
-        }
-    }
-    
-    // Set up event listeners for hash changes
-    window.addEventListener('load', handleHashChange);
-    window.addEventListener('hashchange', handleHashChange);
-    
-    // Also check hash immediately in case page is loaded with hash
-    if (window.location.hash) {
-        handleHashChange();
-    }
-    
-    // Set current year
-    document.getElementById('current-year').textContent = new Date().getFullYear();
-    
-    // Mouse move effect for home page
-    document.addEventListener('mousemove', (e) => {
-        const x = e.clientX / window.innerWidth;
-        const y = e.clientY / window.innerHeight;
-        
-        const elements = document.querySelectorAll('.floating-element');
-        elements.forEach((el, index) => {
-            const speed = 0.1 + index * 0.05;
-            const moveX = (x - 0.5) * 100 * speed;
-            const moveY = (y - 0.5) * 100 * speed;
-            el.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        });
-    });
-    
-    // Smooth scroll to top when switching tabs
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-    
-    // Breathing circle interaction
-    const breathingCircle = document.querySelector('.breathing-circle');
-    if (breathingCircle) {
-        breathingCircle.addEventListener('click', function() {
-            this.style.animation = 'none';
-            setTimeout(() => {
-                this.style.animation = 'breathe 8s infinite ease-in-out';
-            }, 10);
-        });
-    }
+        <!-- Projects Page -->
+        <div id="projects" class="page">
+            <div class="projects-grid">
+                <div class="project-card">
+                    <span class="project-tag">web experiment</span>
+                    <h3>Pages website</h3>
+                    <p>An interactive website experimenting with html.</p>
+                </div>
+                
+                <div class="project-card">
+                    <span class="project-tag">api system</span>
+                    <h3>Cross-platform api</h3>
+                    <p>Exploring interaction from one application to another with configurable options.</p>
+                </div>
+                
+                <div class="project-card">
+                    <span class="project-tag">digital garden</span>
+                    <h3>Thought Space</h3>
+                    <p>Personal knowledge management system for organizing ideas, notes, and connections between concepts.</p>
+                </div>
+                
+                <div class="project-card">
+                    <span class="project-tag">tool</span>
+                    <h3>Messages</h3>
+                    <p>Sending messages between multiple social platforms with a simple menu and minimal clicks.</p>
+                </div>
+            </div>
+        </div>
 
-    // ========== HIDDEN API FUNCTIONALITY ==========
-    
-    // Your API data
-    const apiData = {
-        status: "success",
-        message: "Welcome to pagesoftwo API",
-        timestamp: new Date().toISOString(),
-        data: {
-            site_info: {
-                name: "pagesoftwo",
-                version: "1.0.0",
-                online: true,
-                visitor_count: 1254,
-                last_updated: new Date().toLocaleDateString()
-            },
-            projects: [
-                {
-                    id: 1,
-                    name: "Pages website",
-                    description: "Interactive website experimenting with HTML/CSS/JS",
-                    status: "active",
-                    tags: ["web", "experiment"]
-                },
-                {
-                    id: 2,
-                    name: "Cross-platform API",
-                    description: "Exploring application interaction with configurable options",
-                    status: "in-progress",
-                    tags: ["api", "system"]
-                },
-                {
-                    id: 3,
-                    name: "Thought Space",
-                    description: "Personal knowledge management system",
-                    status: "planned",
-                    tags: ["digital-garden", "organization"]
+        <!-- Blank Page - Breathing Space -->
+        <div id="blank" class="page">
+            <div class="breathing-circle"></div>
+            <div class="breath-instruction">
+                breathe in • breathe out
+            </div>
+            <div class="blank-message">
+                digital meditation space<br>
+                _<br>
+                clear your mind<br>
+                _<br>
+                focus on your breath<br>
+                _<br>
+                [ ]
+            </div>
+        </div>
+
+        <!-- Hidden API Page - Not in menu, accessible by direct link -->
+        <div id="api" class="page">
+            <div class="api-container">
+                <div class="api-docs">
+                    <h2>pagesoftwo Real API</h2>
+                    <p>Welcome to the real API interface. This connects to your Flask backend running on localhost:5000.</p>
+                    
+                    <h3>Available Endpoints</h3>
+                    
+                    <div class="api-endpoint">
+                        <span class="endpoint-method">GET</span>
+                        <code>/api/data</code>
+                        <p style="margin-top: 0.5rem; color: #aaa;">Returns basic site information and statistics</p>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <span class="endpoint-method">GET</span>
+                        <code>/api/projects</code>
+                        <p style="margin-top: 0.5rem; color: #aaa;">Returns list of current projects</p>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <span class="endpoint-method">POST</span>
+                        <code>/api/log</code>
+                        <p style="margin-top: 0.5rem; color: #aaa;">Logs activity to the backend</p>
+                    </div>
+                    
+                    <h3>Example Response</h3>
+                    <div class="api-response" id="exampleResponse">
+                        <!-- JSON will be displayed here -->
+                    </div>
+                </div>
+                
+                <div class="api-tester">
+                    <h3>Real API Tester</h3>
+                    <div class="test-controls">
+                        <select class="api-select" id="apiEndpoint">
+                            <option value="GET /api/data">GET /api/data</option>
+                            <option value="GET /api/projects">GET /api/projects</option>
+                            <option value="GET /api/stats">GET /api/stats</option>
+                            <option value="POST /api/visitors">POST /api/visitors</option>
+                            <option value="POST /api/log">POST /api/log</option>
+                        </select>
+                        <button class="test-button" id="testApi">Test Endpoint</button>
+                    </div>
+                    <div class="test-result" id="testResult">
+                        <div style="color: #888; font-style: italic;">Click "Test Endpoint" to see results</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="api-note">
+                <h4>Note</h4>
+                <p>This is a <strong>real API</strong> connecting to your Flask backend. Make sure your API server is running on port 5000.</p>
+                <p style="margin-top: 0.8rem; font-size: 0.9rem;">To access this page directly: <code>https://pagesoftwo.com/#api</code></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        pagesoftwo • digital minimalism • © <span id="current-year">2024</span>
+    </div>
+
+    <script>
+        // ========== TAB NAVIGATION ==========
+        const tabs = document.querySelectorAll('.tab');
+        const pages = document.querySelectorAll('.page');
+        
+        // Function to switch pages
+        function switchPage(pageId) {
+            // Remove active class from all tabs and pages
+            tabs.forEach(t => t.classList.remove('active'));
+            pages.forEach(p => p.classList.remove('active'));
+            
+            // Add active class to corresponding tab (if it exists and is not api)
+            const tab = document.querySelector(`[data-page="${pageId}"]`);
+            if (tab && pageId !== 'api') {
+                tab.classList.add('active');
+            }
+            
+            // Show corresponding page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update URL hash (except for home)
+            if (pageId !== 'home') {
+                window.location.hash = pageId;
+            } else {
+                // Remove hash for home page
+                history.replaceState(null, null, ' ');
+            }
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Tab click events
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const pageId = tab.getAttribute('data-page');
+                switchPage(pageId);
+            });
+        });
+        
+        // Check URL hash on load and when hash changes
+        function handleHashChange() {
+            const hash = window.location.hash.substring(1);
+            
+            // Valid page IDs
+            const validPages = ['home', 'about', 'projects', 'blank', 'api'];
+            
+            if (validPages.includes(hash)) {
+                switchPage(hash);
+                // Initialize API if on API page
+                if (hash === 'api') {
+                    setTimeout(initializeAPI, 100);
                 }
-            ],
-            statistics: {
-                total_visits: 1254,
-                api_calls: 42,
-                uptime: "99.8%",
-                response_time: "125ms"
+            } else {
+                // Default to home if no valid hash
+                switchPage('home');
             }
         }
-    };
-    
-    // Function to format JSON with colors
-    function formatJSON(obj) {
-        const json = JSON.stringify(obj, null, 2);
-        return json
-            .replace(/("[\w]+":)/g, '<span class="json-key">$1</span>')
-            .replace(/("[^"]*")/g, '<span class="json-string">$1</span>')
-            .replace(/\b(\d+\.?\d*)\b/g, '<span class="json-number">$1</span>')
-            .replace(/\b(true|false|null)\b/g, '<span class="json-boolean">$1</span>');
-    }
-    
-    // Function to simulate API calls
-    function callAPI(endpoint, method = 'GET', data = null) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                let response;
-                
-                switch(endpoint) {
-                    case '/api/data':
-                        response = {
-                            ...apiData,
-                            endpoint: '/api/data',
-                            method: 'GET',
-                            calls: apiData.data.statistics.api_calls += 1
-                        };
-                        break;
-                        
-                    case '/api/projects':
-                        response = {
-                            status: "success",
-                            message: "Projects retrieved successfully",
-                            timestamp: new Date().toISOString(),
-                            count: apiData.data.projects.length,
-                            projects: apiData.data.projects
-                        };
-                        apiData.data.statistics.api_calls += 1;
-                        break;
-                        
-                    case '/api/log':
-                        response = {
-                            status: "success",
-                            message: "Activity logged successfully",
-                            timestamp: new Date().toISOString(),
-                            logged_data: data || { activity: "API test" },
-                            log_id: Math.random().toString(36).substr(2, 9)
-                        };
-                        apiData.data.statistics.api_calls += 1;
-                        break;
-                        
-                    default:
-                        response = {
-                            status: "error",
-                            message: "Endpoint not found",
-                            endpoint: endpoint
-                        };
-                }
-                
-                resolve(response);
-            }, 500); // Simulate network delay
+        
+        // Set up event listeners
+        window.addEventListener('load', handleHashChange);
+        window.addEventListener('hashchange', handleHashChange);
+        
+        // Set current year
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // Mouse move effect for home page
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            const elements = document.querySelectorAll('.floating-element');
+            elements.forEach((el, index) => {
+                const speed = 0.1 + index * 0.05;
+                const moveX = (x - 0.5) * 100 * speed;
+                const moveY = (y - 0.5) * 100 * speed;
+                el.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            });
         });
-    }
-    
-    // Initialize API page
-    function initializeAPI() {
-        // Display example JSON
-        const exampleResponse = document.getElementById('exampleResponse');
-        if (exampleResponse) {
-            exampleResponse.innerHTML = formatJSON(apiData);
-        }
         
-        // Setup API tester
-        const testButton = document.getElementById('testApi');
-        const testResult = document.getElementById('testResult');
-        const apiEndpoint = document.getElementById('apiEndpoint');
-        
-        if (testButton && testResult) {
-            testButton.addEventListener('click', async () => {
-                const endpoint = apiEndpoint.value.split(' ')[1]; // Get just the path
-                const method = apiEndpoint.value.split(' ')[0]; // GET or POST
-                
-                testResult.innerHTML = '<div style="color: #888; font-style: italic;">Testing endpoint...</div>';
-                
-                try {
-                    const data = method === 'POST' ? { test: true, timestamp: new Date().toISOString() } : null;
-                    const response = await callAPI(endpoint, method, data);
-                    testResult.innerHTML = formatJSON(response);
-                } catch (error) {
-                    testResult.innerHTML = `<div style="color: #fd79a8;">Error: ${error.message}</div>`;
-                }
+        // Breathing circle interaction
+        const breathingCircle = document.querySelector('.breathing-circle');
+        if (breathingCircle) {
+            breathingCircle.addEventListener('click', function() {
+                this.style.animation = 'none';
+                setTimeout(() => {
+                    this.style.animation = 'breathe 8s infinite ease-in-out';
+                }, 10);
             });
         }
         
-        // Make API available globally for debugging
-        window.pagesoftwoAPI = {
-            getData: () => callAPI('/api/data'),
-            getProjects: () => callAPI('/api/projects'),
-            logActivity: (data) => callAPI('/api/log', 'POST', data),
-            data: apiData
-        };
+        // ========== REAL API CONFIGURATION ==========
         
-        // Log that API is available
-        console.log('pagesoftwo API loaded. Access via window.pagesoftwoAPI');
-    }
-    
-    // Initialize API when API page is shown
-    document.addEventListener('DOMContentLoaded', () => {
-        // Check if we're on the API page
+        // Your API URL (change this to your actual API URL)
+        const API_BASE_URL = 'http://localhost:5000';  // Local development
+        // const API_BASE_URL = 'https://your-api-url.com';  // Production
+        
+        // Function to call your real API
+        async function callRealAPI(endpoint, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                };
+                
+                if (data && (method === 'POST' || method === 'PUT')) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+                
+                return await response.json();
+                
+            } catch (error) {
+                console.error(`API call failed (${endpoint}):`, error);
+                throw error;
+            }
+        }
+        
+        // Function to update visitor count
+        async function updateVisitorCount() {
+            try {
+                const data = await callRealAPI('/api/visitors', 'POST');
+                console.log('Visitor count updated:', data.visitor_count);
+                return data;
+            } catch (error) {
+                console.warn('Could not update visitor count:', error.message);
+                return null;
+            }
+        }
+        
+        // Function to get API data
+        async function getAPIData() {
+            try {
+                const data = await callRealAPI('/api/data');
+                return data;
+            } catch (error) {
+                console.warn('Could not fetch API data:', error.message);
+                return {
+                    status: "error",
+                    message: "API unavailable. Make sure the API server is running on port 5000.",
+                    data: {
+                        site_info: {
+                            name: "pagesoftwo",
+                            online: false
+                        }
+                    }
+                };
+            }
+        }
+        
+        // Function to display real API data on your website
+        async function displayRealAPIData() {
+            const apiContent = document.getElementById('apiContent');
+            if (!apiContent) return;
+            
+            apiContent.innerHTML = '<div class="loading">Connecting to API...</div>';
+            
+            try {
+                const apiData = await getAPIData();
+                
+                if (apiData.status === "error") {
+                    apiContent.innerHTML = `
+                        <div class="error">
+                            <p>API Connection Error</p>
+                            <p><small>${apiData.message}</small></p>
+                            <p><small>Run: <code>python api/app.py</code> to start the API server</small></p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const site = apiData.data.site_info;
+                
+                apiContent.innerHTML = `
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="font-size: 1.1rem; color: #fff; margin-bottom: 0.8rem;">
+                            ${site.name} API
+                        </div>
+                        <div style="color: #a29bfe; font-size: 0.9rem;">
+                            Version: ${site.version} | Updated: ${new Date(site.last_updated).toLocaleString()}
+                        </div>
+                    </div>
+                    
+                    <div class="api-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">${site.visitor_count}</div>
+                            <div class="stat-label">Visitors</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${apiData.data.projects.length}</div>
+                            <div class="stat-label">Projects</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${apiData.data.statistics.api_calls}</div>
+                            <div class="stat-label">API Calls</div>
+                        </div>
+                    </div>
+                    
+                    <div class="quote-box">
+                        <div class="status-indicator">
+                            <i class="fas fa-circle" style="color: ${site.online ? '#27ca3f' : '#fd79a8'}; font-size: 0.7rem;"></i>
+                            Status: ${site.online ? 'Online' : 'Offline'}
+                        </div>
+                        <div style="margin-top: 0.8rem; color: #888; font-size: 0.85rem;">
+                            Response time: ${apiData.data.statistics.response_time}
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                apiContent.innerHTML = `
+                    <div class="error">
+                        <p>Failed to load API data</p>
+                        <p><small>${error.message}</small></p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Function to test API connection
+        async function testRealAPI() {
+            const resultDiv = document.getElementById('apiTestResult');
+            if (!resultDiv) return;
+            
+            resultDiv.innerHTML = '<div style="color: #888; font-style: italic;">Testing connection...</div>';
+            
+            try {
+                const startTime = Date.now();
+                const response = await callRealAPI('/api/status');
+                const responseTime = Date.now() - startTime;
+                
+                resultDiv.innerHTML = `
+                    <div style="color: #27ca3f;">
+                        <i class="fas fa-check-circle"></i> API is online
+                    </div>
+                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.3rem;">
+                        Response time: ${responseTime}ms | Status: ${response.status}
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="color: #fd79a8;">
+                        <i class="fas fa-times-circle"></i> API connection failed
+                    </div>
+                    <div style="color: #888; font-size: 0.8rem; margin-top: 0.3rem;">
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Function to format JSON with colors
+        function formatJSON(obj) {
+            const json = JSON.stringify(obj, null, 2);
+            return json
+                .replace(/("[\w]+":)/g, '<span class="json-key">$1</span>')
+                .replace(/("[^"]*")/g, '<span class="json-string">$1</span>')
+                .replace(/\b(\d+\.?\d*)\b/g, '<span class="json-number">$1</span>')
+                .replace(/\b(true|false|null)\b/g, '<span class="json-boolean">$1</span>');
+        }
+        
+        // Initialize real API on page load
+        window.addEventListener('load', async () => {
+            // Update visitor count
+            await updateVisitorCount();
+            
+            // Display API data
+            await displayRealAPIData();
+            
+            // Add refresh button listener
+            const refreshButton = document.getElementById('refreshAPI');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', async () => {
+                    await displayRealAPIData();
+                });
+            }
+            
+            // Make API functions globally available
+            window.pagesoftwoRealAPI = {
+                getData: () => callRealAPI('/api/data'),
+                getProjects: () => callRealAPI('/api/projects'),
+                getStats: () => callRealAPI('/api/stats'),
+                updateVisitors: () => callRealAPI('/api/visitors', 'POST'),
+                addLog: (data) => callRealAPI('/api/log', 'POST', data),
+                testConnection: testRealAPI
+            };
+            
+            console.log('Real API loaded. Access via window.pagesoftwoRealAPI');
+        });
+        
+        // Function for API tester page
+        async function testAPIEndpoint() {
+            const endpoint = document.getElementById('apiEndpoint').value;
+            const testResult = document.getElementById('testResult');
+            
+            if (!testResult) return;
+            
+            testResult.innerHTML = '<div style="color: #888; font-style: italic;">Testing endpoint...</div>';
+            
+            try {
+                const [method, path] = endpoint.split(' ');
+                const data = method === 'POST' ? { test: true, timestamp: new Date().toISOString() } : null;
+                
+                const response = await callRealAPI(path, method, data);
+                testResult.innerHTML = formatJSON(response);
+            } catch (error) {
+                testResult.innerHTML = `<div style="color: #fd79a8;">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Initialize API page
+        function initializeAPI() {
+            // Setup API tester
+            const testButton = document.getElementById('testApi');
+            const testResult = document.getElementById('testResult');
+            const apiEndpoint = document.getElementById('apiEndpoint');
+            
+            if (testButton && testResult) {
+                testButton.addEventListener('click', testAPIEndpoint);
+            }
+            
+            // Load example data
+            async function loadExampleData() {
+                try {
+                    const data = await callRealAPI('/api/data');
+                    const exampleResponse = document.getElementById('exampleResponse');
+                    if (exampleResponse) {
+                        exampleResponse.innerHTML = formatJSON(data);
+                    }
+                } catch (error) {
+                    const exampleResponse = document.getElementById('exampleResponse');
+                    if (exampleResponse) {
+                        exampleResponse.innerHTML = `<div class="error">Could not load example: ${error.message}</div>`;
+                    }
+                }
+            }
+            
+            loadExampleData();
+        }
+        
+        // Initialize API if we're on the API page
         if (window.location.hash === '#api') {
             setTimeout(initializeAPI, 100);
         }
         
-        // Also initialize when page changes to API
-        const observer = new MutationObserver(() => {
-            if (document.getElementById('api')?.classList.contains('active')) {
-                initializeAPI();
-            }
-        });
-        
-        observer.observe(document.getElementById('api'), { 
-            attributes: true, 
-            attributeFilter: ['class'] 
-        });
-    });
-    
-</script>
-    </body>
+    </script>
+</body>
 </html>
