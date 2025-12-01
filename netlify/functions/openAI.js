@@ -1,42 +1,27 @@
-export async function handler(event, context) {
+import OpenAI from "openai";
+
+export default async (req) => {
   try {
-    const body = JSON.parse(event.body || "{}");
-    const prompt = body.q || "Hello!";
+    const body = await req.json();
 
-    const apiKey = process.env.OPENAI_API_KEY; // 🔥 YOUR ENV VARIABLE
+    const client = new OpenAI();
 
-    if (!apiKey) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "API key missing on server" })
-      };
-    }
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        messages: [
-          { role: "user", content: prompt }
-        ]
-      })
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "user", content: body.message }
+      ]
     });
 
-    const data = await response.json();
+    return new Response(
+      JSON.stringify({ reply: response.choices[0].message.content }),
+      { status: 200 }
+    );
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data)
-    };
-
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message })
-    };
+  } catch (e) {
+    return new Response(
+      JSON.stringify({ error: e.message }),
+      { status: 500 }
+    );
   }
-}
+};
