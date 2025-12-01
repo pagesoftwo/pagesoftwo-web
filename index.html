@@ -22,6 +22,25 @@
             cursor: default;
         }
         
+        /* Secret Easter Egg Button */
+        .secret-button {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 30px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 1001;
+            opacity: 0.01;
+            transition: opacity 0.3s;
+        }
+        
+        .secret-button:hover {
+            opacity: 0.05;
+        }
+        
         /* Minimal Tabs Navigation */
         .tabs {
             position: fixed;
@@ -172,12 +191,6 @@
             background-clip: text;
             letter-spacing: -1px;
             line-height: 1.1;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-        
-        .main-title:hover {
-            transform: scale(1.02);
         }
         
         .subtitle {
@@ -547,6 +560,15 @@
             }
         }
         
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .tabs-container {
@@ -620,6 +642,9 @@
     </style>
 </head>
 <body>
+    <!-- Secret Easter Egg Button (invisible in top right corner) -->
+    <button class="secret-button" id="secretButton" title="Secret Easter Egg"></button>
+
     <!-- Minimal Tabs -->
     <div class="tabs">
         <div class="tabs-container">
@@ -770,7 +795,7 @@
             <div class="secret-content">
                 <h1 class="secret-title">you found the secret</h1>
                 <p class="secret-message">
-                    Congratulations explorer! You've discovered the hidden page by clicking "pagesoftwo" 3 times.<br>
+                    Congratulations explorer! You've discovered the hidden page.<br>
                     This space is reserved for special content, experiments, or anything else that doesn't fit elsewhere.
                 </p>
                 
@@ -805,12 +830,8 @@
         // Tab Navigation
         const tabs = document.querySelectorAll('.tab');
         const pages = document.querySelectorAll('.page');
+        const secretButton = document.getElementById('secretButton');
         const backButton = document.getElementById('backButton');
-        const mainTitle = document.querySelector('.main-title');
-        
-        // Triple click counter for pagesoftwo
-        let clickCount = 0;
-        let clickTimer;
         
         // Function to switch pages
         function switchPage(pageId) {
@@ -829,11 +850,6 @@
             
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            // Initialize page-specific features
-            if (pageId === 'blank') {
-                initBreathingCircle();
-            }
         }
         
         // Tab click events
@@ -844,72 +860,82 @@
             });
         });
         
+        // Secret button click event
+        secretButton.addEventListener('click', () => {
+            // Glitch effect animation
+            secretButton.style.animation = 'glitch 0.3s';
+            setTimeout(() => {
+                secretButton.style.animation = '';
+            }, 300);
+            
+            // Show secret page
+            setTimeout(() => {
+                switchPage('secret');
+            }, 150);
+        });
+        
         // Back button click event
         backButton.addEventListener('click', () => {
             switchPage('home');
         });
         
-        // Triple click on "pagesoftwo" title
-        mainTitle.addEventListener('click', () => {
-            clickCount++;
-            
-            // Visual feedback
-            mainTitle.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                mainTitle.style.transform = 'scale(1)';
-            }, 200);
-            
-            if (clickCount === 3) {
-                clearTimeout(clickTimer);
+        // Keyboard shortcut for secret page (Ctrl+Shift+S)
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
                 switchPage('secret');
-                clickCount = 0;
-            } else {
-                clearTimeout(clickTimer);
-                clickTimer = setTimeout(() => {
-                    clickCount = 0;
-                }, 1000); // Reset after 1 second
             }
         });
         
         // Set current year
         document.getElementById('current-year').textContent = new Date().getFullYear();
         
-        // Mouse move effect for home page (only when home is active)
-        function initHomeMouseEffect() {
+        // Mouse move effect for home page
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
             const elements = document.querySelectorAll('.floating-element');
-            if (elements.length > 0) {
-                document.addEventListener('mousemove', (e) => {
-                    if (!document.getElementById('home').classList.contains('active')) return;
-                    
-                    const x = e.clientX / window.innerWidth;
-                    const y = e.clientY / window.innerHeight;
-                    
-                    elements.forEach((el, index) => {
-                        const speed = 0.1 + index * 0.05;
-                        const moveX = (x - 0.5) * 100 * speed;
-                        const moveY = (y - 0.5) * 100 * speed;
-                        el.style.transform = `translate(${moveX}px, ${moveY}px)`;
-                    });
-                });
-            }
+            elements.forEach((el, index) => {
+                const speed = 0.1 + index * 0.05;
+                const moveX = (x - 0.5) * 100 * speed;
+                const moveY = (y - 0.5) * 100 * speed;
+                el.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            });
+        });
+        
+        // Breathing circle interaction
+        const breathingCircle = document.querySelector('.breathing-circle');
+        if (breathingCircle) {
+            breathingCircle.addEventListener('click', function() {
+                this.style.animation = 'none';
+                setTimeout(() => {
+                    this.style.animation = 'breathe 8s infinite ease-in-out';
+                }, 10);
+            });
         }
         
-        // Initialize breathing circle interaction (only for blank page)
-        function initBreathingCircle() {
-            const breathingCircle = document.querySelector('.breathing-circle');
-            if (breathingCircle) {
-                breathingCircle.addEventListener('click', function() {
-                    this.style.animation = 'none';
-                    setTimeout(() => {
-                        this.style.animation = 'breathe 8s infinite ease-in-out';
-                    }, 10);
-                });
-            }
-        }
+        // Easter egg: Click the word "pagesoftwo" 3 times
+        let clickCount = 0;
+        let clickTimer;
         
-        // Initialize
-        initHomeMouseEffect();
-        initBreathingCircle();
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('main-title') || 
+                e.target.textContent.includes('pagesoftwo')) {
+                clickCount++;
+                
+                if (clickCount === 3) {
+                    clearTimeout(clickTimer);
+                    switchPage('secret');
+                    clickCount = 0;
+                } else {
+                    clearTimeout(clickTimer);
+                    clickTimer = setTimeout(() => {
+                        clickCount = 0;
+                    }, 1000);
+                }
+            }
+        });
     </script>
 </body>
 </html>
