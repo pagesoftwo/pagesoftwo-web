@@ -19,20 +19,529 @@
             color: #e0e0e0;
             min-height: 100vh;
             overflow-x: hidden;
-            cursor: default;
         }
         
-        /* Minimal Tabs Navigation */
-        .tabs {
+        /* Login/Signup Modal */
+        .login-modal {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(15, 15, 15, 0.97);
-            border-bottom: 1px solid #222;
-            backdrop-filter: blur(15px);
-            z-index: 1000;
+            bottom: 0;
+            background: rgba(10, 10, 10, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        
+        .login-modal.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        .login-card {
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid #333;
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: modalAppear 0.5s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .login-logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 30%, #a29bfe 70%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+        
+        .login-title {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .login-subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        
+        /* Tab Switcher */
+        .auth-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 0.3rem;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #888;
+            font-weight: 500;
+        }
+        
+        .auth-tab.active {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+        }
+        
+        /* Form Styles */
+        .auth-form {
+            text-align: left;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        
+        .auth-form.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            color: #6c5ce7;
+            font-size: 1rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.9rem 1rem 0.9rem 2.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.1);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+        }
+        
+        .form-input::placeholder {
+            color: #555;
+            font-size: 0.9rem;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            color: #6c5ce7;
+        }
+        
+        .password-strength {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .strength-bar {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .strength-segment {
+            height: 4px;
+            flex: 1;
+            background: #333;
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+        
+        .strength-segment.weak {
+            background: #fd79a8;
+        }
+        
+        .strength-segment.medium {
+            background: #fdcb6e;
+        }
+        
+        .strength-segment.strong {
+            background: #27ca3f;
+        }
+        
+        .strength-text {
+            color: #888;
+        }
+        
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .remember-me, .terms-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #aaa;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .remember-me input[type="checkbox"],
+        .terms-check input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #6c5ce7;
+            cursor: pointer;
+        }
+        
+        .forgot-link, .terms-link {
+            color: #6c5ce7;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-link:hover, .terms-link:hover {
+            color: #a29bfe;
+            text-decoration: underline;
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(108, 92, 231, 0.3);
+        }
+        
+        .auth-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .error-message {
+            background: rgba(253, 121, 168, 0.1);
+            border: 1px solid #fd79a8;
+            color: #fd79a8;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .error-message.show {
+            display: flex;
+        }
+        
+        .success-message {
+            background: rgba(39, 202, 63, 0.1);
+            border: 1px solid #27ca3f;
+            color: #27ca3f;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .success-message.show {
+            display: flex;
+        }
+        
+        .info-message {
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid #6c5ce7;
+            color: #a29bfe;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+            text-align: left;
+        }
+        
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #666;
+            font-size: 0.85rem;
+            margin: 1.5rem 0;
+        }
+        
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #333;
+        }
+        
+        .guest-login {
+            width: 100%;
+            padding: 0.8rem;
+            background: transparent;
+            border: 1px solid #333;
+            border-radius: 12px;
+            color: #888;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .guest-login:hover {
+            border-color: #6c5ce7;
+            color: #a29bfe;
+            background: rgba(108, 92, 231, 0.05);
+        }
+        
+        .login-footer {
+            margin-top: 2rem;
+            color: #666;
+            font-size: 0.8rem;
+        }
+        
+        .login-footer a {
+            color: #888;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .login-footer a:hover {
+            color: #a29bfe;
+        }
+        
+        /* User Menu (same as before) */
+        .user-menu {
+            position: relative;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0 1rem;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .user-menu:hover .user-avatar {
+            border-color: #a29bfe;
+            transform: scale(1.05);
+        }
+        
+        .user-name {
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 1rem;
+            background: rgba(25, 25, 25, 0.95);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 0.5rem;
+            min-width: 200px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .user-menu:hover .user-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-item {
+            padding: 0.8rem 1rem;
+            color: #e0e0e0;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.9rem;
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            color: #6c5ce7;
+            font-size: 1rem;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(108, 92, 231, 0.15);
+            color: #fff;
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: #333;
+            margin: 0.5rem 0;
+        }
+        
+        .logout-item {
+            color: #fd79a8;
+        }
+        
+        .logout-item i {
+            color: #fd79a8;
+        }
+        
+        .logout-item:hover {
+            background: rgba(253, 121, 168, 0.15);
+        }
+        
+        .user-badge {
+            background: rgba(108, 92, 231, 0.1);
+            border-radius: 50px;
+            padding: 0.4rem 1.2rem;
+            margin-left: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+        
+        .user-badge:hover {
+            border-color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.15);
+        }
+        
+        .badge-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #6c5ce7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-name {
+            color: #e0e0e0;
+            font-size: 0.85rem;
+            max-width: 100px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .badge-logout {
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            padding: 0.2rem;
+        }
+        
+        .badge-logout:hover {
+            color: #fd79a8;
         }
         
         .tabs-container {
@@ -41,6 +550,7 @@
             display: flex;
             align-items: center;
             height: 60px;
+            position: relative;
         }
         
         .tab {
@@ -58,33 +568,18 @@
             border-right: 1px solid #222;
         }
         
-        .tab:hover {
-            color: #fff;
-            background: rgba(108, 92, 231, 0.1);
-        }
-        
-        .tab.active {
-            color: #fff;
-            background: rgba(108, 92, 231, 0.15);
-        }
-        
-        .tab.active::before {
-            content: '';
-            position: absolute;
+        .tabs {
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+            background: rgba(15, 15, 15, 0.97);
+            border-bottom: 1px solid #222;
+            backdrop-filter: blur(15px);
+            z-index: 1000;
+            padding: 0 1rem;
         }
         
-        .tab-icon {
-            margin-right: 0.6rem;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        
-        /* Main Content Area */
         .content {
             margin-top: 60px;
             min-height: calc(100vh - 60px);
@@ -99,7 +594,7 @@
             display: block;
         }
         
-        /* Home Page - Digital Canvas */
+        /* Rest of your existing styles (home, about, projects, etc.) */
         #home {
             min-height: calc(100vh - 120px);
             position: relative;
@@ -219,7 +714,6 @@
             color: #aaa;
         }
         
-        /* Real API Data Display */
         .api-data {
             background: rgba(20, 20, 20, 0.7);
             border: 1px solid #222;
@@ -301,22 +795,6 @@
             border: 1px solid rgba(253, 121, 168, 0.3);
         }
         
-        .quote-box {
-            margin-top: 1.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid #333;
-        }
-        
-        .status-indicator {
-            color: #888;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        
-        /* Grid Dashboard */
         .dashboard-grid {
             padding: 4rem 2rem;
             max-width: 1200px;
@@ -371,7 +849,6 @@
             line-height: 1.6;
         }
         
-        /* About Page */
         #about {
             padding: 6rem 2rem;
             max-width: 800px;
@@ -400,7 +877,6 @@
             margin-bottom: 1.5rem;
         }
         
-        /* Blank Page - Breathing Space */
         #blank {
             display: flex;
             align-items: center;
@@ -462,7 +938,6 @@
             line-height: 1.8;
         }
         
-        /* Projects Page */
         #projects {
             padding: 6rem 2rem;
             max-width: 1000px;
@@ -512,7 +987,6 @@
             line-height: 1.6;
         }
         
-        /* Hidden API Page */
         #api {
             padding: 6rem 2rem;
             max-width: 1200px;
@@ -665,7 +1139,6 @@
             margin-bottom: 0.8rem;
         }
         
-        /* Footer */
         .footer {
             text-align: center;
             padding: 2rem;
@@ -675,7 +1148,6 @@
             background: rgba(10, 10, 10, 0.9);
         }
         
-        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -712,7 +1184,6 @@
             }
         }
         
-        /* Responsive */
         @media (max-width: 768px) {
             .tabs-container {
                 overflow-x: auto;
@@ -763,9 +1234,16 @@
             #home, #about, #projects, #api {
                 padding: 3rem 1rem;
             }
+            
+            .user-name {
+                display: none;
+            }
+            
+            .user-dropdown {
+                right: 0;
+            }
         }
         
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 10px;
         }
@@ -785,6 +1263,150 @@
     </style>
 </head>
 <body>
+    <!-- Login/Signup Modal -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-card">
+            <div class="login-logo">pagesoftwo</div>
+            <h2 class="login-title">Welcome</h2>
+            <p class="login-subtitle">Sign in or create an account</p>
+            
+            <!-- Auth Tab Switcher -->
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">Sign In</div>
+                <div class="auth-tab" id="signupTab" onclick="switchAuthTab('signup')">Sign Up</div>
+            </div>
+            
+            <!-- Error Message -->
+            <div class="error-message" id="loginError">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText"></span>
+            </div>
+            
+            <!-- Success Message -->
+            <div class="success-message" id="loginSuccess">
+                <i class="fas fa-check-circle"></i>
+                <span id="successText"></span>
+            </div>
+            
+            <!-- Info Message -->
+            <div class="info-message" id="infoMessage">
+                <i class="fas fa-info-circle"></i>
+                <span id="infoText">Default: demo/demo123</span>
+            </div>
+            
+            <!-- Login Form -->
+            <form class="auth-form active" id="loginForm" onsubmit="return false;">
+                <div class="form-group">
+                    <label class="form-label">Username or Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="form-input" id="loginUsername" placeholder="Enter username" autocomplete="username">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-input" id="loginPassword" placeholder="Enter password" autocomplete="current-password">
+                        <i class="fas fa-eye password-toggle" id="toggleLoginPassword" onclick="togglePasswordVisibility('loginPassword', 'toggleLoginPassword')"></i>
+                    </div>
+                </div>
+                
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe"> Remember me
+                    </label>
+                    <a href="#" class="forgot-link" onclick="showForgotPassword()">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="auth-btn" id="loginBtn" onclick="handleLogin()">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In
+                </button>
+            </form>
+            
+            <!-- Signup Form -->
+            <form class="auth-form" id="signupForm" onsubmit="return false;">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="form-input" id="signupName" placeholder="Enter your full name">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-at input-icon"></i>
+                        <input type="text" class="form-input" id="signupUsername" placeholder="Choose a username">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" class="form-input" id="signupEmail" placeholder="Enter your email">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-input" id="signupPassword" placeholder="Create a password" onkeyup="checkPasswordStrength()">
+                        <i class="fas fa-eye password-toggle" id="toggleSignupPassword" onclick="togglePasswordVisibility('signupPassword', 'toggleSignupPassword')"></i>
+                    </div>
+                    
+                    <!-- Password Strength Meter -->
+                    <div class="password-strength">
+                        <div class="strength-bar">
+                            <div class="strength-segment" id="strength1"></div>
+                            <div class="strength-segment" id="strength2"></div>
+                            <div class="strength-segment" id="strength3"></div>
+                        </div>
+                        <span class="strength-text" id="strengthText">Enter a password</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-input" id="signupConfirmPassword" placeholder="Confirm your password">
+                        <i class="fas fa-eye password-toggle" id="toggleConfirmPassword" onclick="togglePasswordVisibility('signupConfirmPassword', 'toggleConfirmPassword')"></i>
+                    </div>
+                </div>
+                
+                <div class="form-options">
+                    <label class="terms-check">
+                        <input type="checkbox" id="acceptTerms"> I accept the <a href="#" class="terms-link">Terms of Service</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="auth-btn" id="signupBtn" onclick="handleSignup()">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+            </form>
+            
+            <div class="login-divider">
+                <span>or</span>
+            </div>
+            
+            <button class="guest-login" id="guestLogin">
+                <i class="fas fa-user-friends"></i>
+                Continue as Guest
+            </button>
+            
+            <div class="login-footer">
+                By continuing, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>
+            </div>
+        </div>
+    </div>
+
     <!-- Minimal Tabs -->
     <div class="tabs">
         <div class="tabs-container">
@@ -800,12 +1422,40 @@
             <div class="tab" data-page="blank">
                 <span class="tab-icon">␀</span> blank
             </div>
+            
+            <!-- User Menu -->
+            <div class="user-menu" id="userMenu" style="display: none;">
+                <div class="user-avatar" id="userAvatar">G</div>
+                <span class="user-name" id="userName">Guest</span>
+                <div class="user-dropdown">
+                    <div class="dropdown-item">
+                        <i class="fas fa-user"></i>
+                        <span>Profile</span>
+                    </div>
+                    <div class="dropdown-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item logout-item" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sign Out</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Simple user badge (mobile friendly) -->
+            <div class="user-badge" id="userBadge" style="display: none;">
+                <div class="badge-avatar" id="badgeAvatar">G</div>
+                <span class="badge-name" id="badgeName">Guest</span>
+                <i class="fas fa-sign-out-alt badge-logout" id="badgeLogout"></i>
+            </div>
         </div>
     </div>
 
-    <!-- Content Area -->
+    <!-- Content Area (same as before) -->
     <div class="content">
-        <!-- Home Page - Digital Canvas -->
+        <!-- Home Page -->
         <div id="home" class="page active">
             <div class="hero-canvas">
                 <div class="floating-elements">
@@ -928,7 +1578,7 @@
             </div>
         </div>
 
-        <!-- Blank Page - Breathing Space -->
+        <!-- Blank Page -->
         <div id="blank" class="page">
             <div class="breathing-circle"></div>
             <div class="breath-instruction">
@@ -945,7 +1595,7 @@
             </div>
         </div>
 
-        <!-- Hidden API Page - Not in menu, accessible by direct link -->
+        <!-- API Page -->
         <div id="api" class="page">
             <div class="api-container">
                 <div class="api-docs">
@@ -973,9 +1623,7 @@
                     </div>
                     
                     <h3>Example Response</h3>
-                    <div class="api-response" id="exampleResponse">
-                        <!-- JSON will be displayed here -->
-                    </div>
+                    <div class="api-response" id="exampleResponse"></div>
                 </div>
                 
                 <div class="api-tester">
@@ -1010,38 +1658,535 @@
     </div>
 
     <script>
-        // ========== TAB NAVIGATION ==========
+        // ========== USER DATABASE (Simulated JSON file) ==========
+        // In a real app, this would be a JSON file on a server
+        const USERS_DB_KEY = 'pagesoftwo_users_db';
+        
+        // Initialize user database
+        function initUserDatabase() {
+            // Check if database exists in localStorage
+            let usersDB = localStorage.getItem(USERS_DB_KEY);
+            
+            if (!usersDB) {
+                // Create default users
+                const defaultUsers = [
+                    {
+                        id: '1',
+                        name: 'Demo User',
+                        username: 'demo',
+                        email: 'demo@pagesoftwo.com',
+                        password: 'demo123', // In real app, this would be hashed
+                        createdAt: new Date().toISOString(),
+                        avatar: 'D'
+                    },
+                    {
+                        id: '2',
+                        name: 'Admin',
+                        username: 'admin',
+                        email: 'admin@pagesoftwo.com',
+                        password: 'admin123',
+                        createdAt: new Date().toISOString(),
+                        avatar: 'A'
+                    }
+                ];
+                
+                localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
+                console.log('User database initialized with default users');
+            }
+        }
+        
+        // Get all users
+        function getUsers() {
+            const users = localStorage.getItem(USERS_DB_KEY);
+            return users ? JSON.parse(users) : [];
+        }
+        
+        // Save users
+        function saveUsers(users) {
+            localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
+        }
+        
+        // Find user by username or email
+        function findUserByCredentials(username, password) {
+            const users = getUsers();
+            return users.find(u => 
+                (u.username === username || u.email === username) && 
+                u.password === password
+            );
+        }
+        
+        // Find user by username
+        function findUserByUsername(username) {
+            const users = getUsers();
+            return users.find(u => u.username === username);
+        }
+        
+        // Find user by email
+        function findUserByEmail(email) {
+            const users = getUsers();
+            return users.find(u => u.email === email);
+        }
+        
+        // Add new user
+        function addUser(userData) {
+            const users = getUsers();
+            
+            // Check if username already exists
+            if (findUserByUsername(userData.username)) {
+                return { success: false, message: 'Username already taken' };
+            }
+            
+            // Check if email already exists
+            if (findUserByEmail(userData.email)) {
+                return { success: false, message: 'Email already registered' };
+            }
+            
+            // Create new user
+            const newUser = {
+                id: Date.now().toString(),
+                name: userData.name,
+                username: userData.username,
+                email: userData.email,
+                password: userData.password, // In real app, hash this!
+                createdAt: new Date().toISOString(),
+                avatar: userData.name.charAt(0).toUpperCase()
+            };
+            
+            users.push(newUser);
+            saveUsers(users);
+            
+            return { 
+                success: true, 
+                message: 'Account created successfully',
+                user: {
+                    name: newUser.name,
+                    username: newUser.username,
+                    email: newUser.email,
+                    avatar: newUser.avatar
+                }
+            };
+        }
+        
+        // Initialize database on load
+        initUserDatabase();
+        
+        // ========== LOGIN/SIGNUP SYSTEM ==========
+        const loginModal = document.getElementById('loginModal');
+        const userMenu = document.getElementById('userMenu');
+        const userBadge = document.getElementById('userBadge');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const badgeAvatar = document.getElementById('badgeAvatar');
+        const badgeName = document.getElementById('badgeName');
+        const loginError = document.getElementById('loginError');
+        const loginSuccess = document.getElementById('loginSuccess');
+        const infoMessage = document.getElementById('infoMessage');
+        const errorText = document.getElementById('errorText');
+        const successText = document.getElementById('successText');
+        
+        // Current active auth tab
+        let currentAuthTab = 'login';
+        
+        // Switch between login and signup tabs
+        window.switchAuthTab = function(tab) {
+            currentAuthTab = tab;
+            
+            // Update tab styles
+            document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+            document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
+            
+            // Show/hide forms
+            document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+            document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
+            
+            // Hide messages
+            loginError.classList.remove('show');
+            loginSuccess.classList.remove('show');
+            
+            // Show info message for login tab
+            if (tab === 'login') {
+                infoMessage.style.display = 'block';
+                document.getElementById('infoText').textContent = 'Default: demo/demo123';
+            } else {
+                infoMessage.style.display = 'none';
+            }
+        };
+        
+        // Toggle password visibility
+        window.togglePasswordVisibility = function(inputId, toggleId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = document.getElementById(toggleId);
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        };
+        
+        // Check password strength
+        window.checkPasswordStrength = function() {
+            const password = document.getElementById('signupPassword').value;
+            const strength1 = document.getElementById('strength1');
+            const strength2 = document.getElementById('strength2');
+            const strength3 = document.getElementById('strength3');
+            const strengthText = document.getElementById('strengthText');
+            
+            // Reset classes
+            strength1.className = 'strength-segment';
+            strength2.className = 'strength-segment';
+            strength3.className = 'strength-segment';
+            
+            if (!password) {
+                strengthText.textContent = 'Enter a password';
+                return;
+            }
+            
+            // Check strength
+            let strength = 0;
+            
+            // Length check
+            if (password.length >= 8) strength++;
+            
+            // Contains number
+            if (/\d/.test(password)) strength++;
+            
+            // Contains special character or uppercase
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password) || /[A-Z]/.test(password)) strength++;
+            
+            // Update UI
+            if (strength === 1) {
+                strength1.classList.add('weak');
+                strengthText.textContent = 'Weak password';
+            } else if (strength === 2) {
+                strength1.classList.add('medium');
+                strength2.classList.add('medium');
+                strengthText.textContent = 'Medium password';
+            } else if (strength >= 3) {
+                strength1.classList.add('strong');
+                strength2.classList.add('strong');
+                strength3.classList.add('strong');
+                strengthText.textContent = 'Strong password';
+            } else {
+                strengthText.textContent = 'Too weak';
+            }
+        };
+        
+        // Handle login
+        window.handleLogin = function() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            // Hide previous messages
+            loginError.classList.remove('show');
+            loginSuccess.classList.remove('show');
+            
+            // Validate inputs
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+            
+            // Simulate API call delay
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            
+            setTimeout(() => {
+                // Check credentials against user database
+                const user = findUserByCredentials(username, password);
+                
+                if (user) {
+                    // Successful login
+                    showSuccess('Login successful! Redirecting...');
+                    
+                    // Create user object (don't include password)
+                    const loggedInUser = {
+                        name: user.name,
+                        email: user.email,
+                        username: user.username,
+                        avatar: user.avatar || user.name.charAt(0).toUpperCase()
+                    };
+                    
+                    // Store in session or local storage based on remember me
+                    if (rememberMe) {
+                        localStorage.setItem('pagesoftwo_user', JSON.stringify(loggedInUser));
+                    } else {
+                        sessionStorage.setItem('pagesoftwo_user', JSON.stringify(loggedInUser));
+                    }
+                    
+                    // Update UI after delay
+                    setTimeout(() => {
+                        loginSuccess(loggedInUser);
+                    }, 1000);
+                    
+                } else {
+                    // Failed login
+                    showError('Invalid username or password. Try demo/demo123');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+                }
+            }, 1000);
+        };
+        
+        // Handle signup
+        window.handleSignup = function() {
+            const name = document.getElementById('signupName').value.trim();
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            const acceptTerms = document.getElementById('acceptTerms').checked;
+            
+            // Hide previous messages
+            loginError.classList.remove('show');
+            loginSuccess.classList.remove('show');
+            
+            // Validate inputs
+            if (!name || !username || !email || !password || !confirmPassword) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+            
+            // Validate username (alphanumeric + underscore, 3-20 chars)
+            const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+            if (!usernameRegex.test(username)) {
+                showError('Username must be 3-20 characters (letters, numbers, underscore only)');
+                return;
+            }
+            
+            // Check password length
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+            
+            // Check password match
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            // Check terms acceptance
+            if (!acceptTerms) {
+                showError('You must accept the Terms of Service');
+                return;
+            }
+            
+            // Simulate API call delay
+            const signupBtn = document.getElementById('signupBtn');
+            signupBtn.disabled = true;
+            signupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+            
+            setTimeout(() => {
+                // Try to add user
+                const result = addUser({
+                    name: name,
+                    username: username,
+                    email: email,
+                    password: password
+                });
+                
+                if (result.success) {
+                    // Successful signup
+                    showSuccess('Account created successfully! You can now log in.');
+                    
+                    // Reset form
+                    document.getElementById('signupForm').reset();
+                    document.getElementById('strength1').className = 'strength-segment';
+                    document.getElementById('strength2').className = 'strength-segment';
+                    document.getElementById('strength3').className = 'strength-segment';
+                    document.getElementById('strengthText').textContent = 'Enter a password';
+                    
+                    // Switch to login tab after delay
+                    setTimeout(() => {
+                        switchAuthTab('login');
+                        signupBtn.disabled = false;
+                        signupBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+                        
+                        // Pre-fill username
+                        document.getElementById('loginUsername').value = username;
+                    }, 2000);
+                    
+                } else {
+                    // Failed signup
+                    showError(result.message);
+                    signupBtn.disabled = false;
+                    signupBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+                }
+            }, 1000);
+        };
+        
+        // Show error message
+        function showError(message) {
+            errorText.textContent = message;
+            loginError.classList.add('show');
+            loginSuccess.classList.remove('show');
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            successText.textContent = message;
+            loginSuccess.classList.add('show');
+            loginError.classList.remove('show');
+        }
+        
+        // Handle successful login
+        function loginSuccess(user) {
+            currentUser = user;
+            
+            // Update UI
+            updateUserUI(user);
+            
+            // Hide login modal
+            loginModal.classList.add('hidden');
+            
+            // Show user menu
+            userMenu.style.display = 'flex';
+            userBadge.style.display = 'flex';
+            
+            // Show welcome notification
+            showNotification(`Welcome, ${user.name}!`, 'success');
+            
+            // Reset login button
+            document.getElementById('loginBtn').disabled = false;
+            document.getElementById('loginBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+        }
+        
+        // Guest login
+        document.getElementById('guestLogin').addEventListener('click', () => {
+            const guestUser = {
+                name: 'Guest',
+                email: 'guest@pagesoftwo.com',
+                username: 'guest',
+                avatar: 'G'
+            };
+            
+            sessionStorage.setItem('pagesoftwo_user', JSON.stringify(guestUser));
+            loginSuccess(guestUser);
+            showNotification('You are browsing as a guest', 'info');
+        });
+        
+        // Forgot password
+        window.showForgotPassword = function() {
+            alert('For demo purposes, use: demo/demo123');
+        };
+        
+        // Update user interface
+        function updateUserUI(user) {
+            const initial = user.avatar || user.name.charAt(0).toUpperCase();
+            userAvatar.textContent = initial;
+            userName.textContent = user.name.split(' ')[0];
+            badgeAvatar.textContent = initial;
+            badgeName.textContent = user.name.split(' ')[0];
+        }
+        
+        // Logout function
+        function logout() {
+            currentUser = null;
+            sessionStorage.removeItem('pagesoftwo_user');
+            localStorage.removeItem('pagesoftwo_user');
+            
+            // Hide user menu
+            userMenu.style.display = 'none';
+            userBadge.style.display = 'none';
+            
+            // Show login modal
+            loginModal.classList.remove('hidden');
+            
+            // Reset forms
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('signupForm').reset();
+            document.getElementById('rememberMe').checked = false;
+            document.getElementById('acceptTerms').checked = false;
+            
+            // Reset password strength
+            document.getElementById('strength1').className = 'strength-segment';
+            document.getElementById('strength2').className = 'strength-segment';
+            document.getElementById('strength3').className = 'strength-segment';
+            document.getElementById('strengthText').textContent = 'Enter a password';
+            
+            // Hide messages
+            loginError.classList.remove('show');
+            loginSuccess.classList.remove('show');
+            
+            // Reset buttons
+            document.getElementById('loginBtn').disabled = false;
+            document.getElementById('loginBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+            document.getElementById('signupBtn').disabled = false;
+            document.getElementById('signupBtn').innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+            
+            showNotification('You have been signed out', 'info');
+        }
+        
+        // Check for existing session on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check localStorage first, then sessionStorage
+            const savedUser = localStorage.getItem('pagesoftwo_user') || sessionStorage.getItem('pagesoftwo_user');
+            
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                loginSuccess(user);
+            }
+        });
+        
+        // Logout event listeners
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('badgeLogout').addEventListener('click', (e) => {
+            e.stopPropagation();
+            logout();
+        });
+        
+        // Allow Enter key to submit forms
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+        
+        document.getElementById('signupConfirmPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSignup();
+            }
+        });
+        
+        // ========== EXISTING TAB NAVIGATION ==========
         const tabs = document.querySelectorAll('.tab');
         const pages = document.querySelectorAll('.page');
         
-        // Function to switch pages
         function switchPage(pageId) {
-            // Remove active class from all tabs and pages
             tabs.forEach(t => t.classList.remove('active'));
             pages.forEach(p => p.classList.remove('active'));
             
-            // Add active class to corresponding tab (if it exists and is not api)
             const tab = document.querySelector(`[data-page="${pageId}"]`);
             if (tab && pageId !== 'api') {
                 tab.classList.add('active');
             }
             
-            // Show corresponding page
             document.getElementById(pageId).classList.add('active');
             
-            // Update URL hash (except for home)
             if (pageId !== 'home') {
                 window.location.hash = pageId;
             } else {
-                // Remove hash for home page
                 history.replaceState(null, null, ' ');
             }
             
-            // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
-        // Tab click events
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const pageId = tab.getAttribute('data-page');
@@ -1049,33 +2194,27 @@
             });
         });
         
-        // Check URL hash on load and when hash changes
         function handleHashChange() {
             const hash = window.location.hash.substring(1);
-            
-            // Valid page IDs
             const validPages = ['home', 'about', 'projects', 'blank', 'api'];
             
             if (validPages.includes(hash)) {
                 switchPage(hash);
-                // Initialize API if on API page
                 if (hash === 'api') {
                     setTimeout(initializeAPI, 100);
                 }
             } else {
-                // Default to home if no valid hash
                 switchPage('home');
             }
         }
         
-        // Set up event listeners
         window.addEventListener('load', handleHashChange);
         window.addEventListener('hashchange', handleHashChange);
         
         // Set current year
         document.getElementById('current-year').textContent = new Date().getFullYear();
         
-        // Mouse move effect for home page
+        // Mouse move effect
         document.addEventListener('mousemove', (e) => {
             const x = e.clientX / window.innerWidth;
             const y = e.clientY / window.innerHeight;
@@ -1089,24 +2228,49 @@
             });
         });
         
-        // Breathing circle interaction
-        const breathingCircle = document.querySelector('.breathing-circle');
-        if (breathingCircle) {
-            breathingCircle.addEventListener('click', function() {
-                this.style.animation = 'none';
-                setTimeout(() => {
-                    this.style.animation = 'breathe 8s infinite ease-in-out';
-                }, 10);
-            });
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: ${type === 'success' ? 'rgba(39, 202, 63, 0.2)' : type === 'error' ? 'rgba(253, 121, 168, 0.2)' : 'rgba(108, 92, 231, 0.2)'};
+                border: 1px solid ${type === 'success' ? '#27ca3f' : type === 'error' ? '#fd79a8' : '#6c5ce7'};
+                color: ${type === 'success' ? '#27ca3f' : type === 'error' ? '#fd79a8' : '#a29bfe'};
+                padding: 1rem 2rem;
+                border-radius: 8px;
+                backdrop-filter: blur(10px);
+                z-index: 3000;
+                animation: slideIn 0.3s ease;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
         
+        // Add notification animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
         // ========== REAL API CONFIGURATION ==========
+        const API_BASE_URL = 'http://localhost:5000';
         
-        // Your API URL (change this to your actual API URL)
-        const API_BASE_URL = 'http://localhost:5000';  // Local development
-        // const API_BASE_URL = 'https://your-api-url.com';  // Production
-        
-        // Function to call your real API
         async function callRealAPI(endpoint, method = 'GET', data = null) {
             try {
                 const options = {
@@ -1124,22 +2288,20 @@
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
                 
                 if (!response.ok) {
-                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    throw new Error(`API Error: ${response.status}`);
                 }
                 
                 return await response.json();
                 
             } catch (error) {
-                console.error(`API call failed (${endpoint}):`, error);
+                console.error(`API call failed:`, error);
                 throw error;
             }
         }
         
-        // Function to update visitor count
         async function updateVisitorCount() {
             try {
                 const data = await callRealAPI('/api/visitors', 'POST');
-                console.log('Visitor count updated:', data.visitor_count);
                 return data;
             } catch (error) {
                 console.warn('Could not update visitor count:', error.message);
@@ -1147,13 +2309,11 @@
             }
         }
         
-        // Function to get API data
         async function getAPIData() {
             try {
                 const data = await callRealAPI('/api/data');
                 return data;
             } catch (error) {
-                console.warn('Could not fetch API data:', error.message);
                 return {
                     status: "error",
                     message: "API unavailable. Make sure the API server is running on port 5000.",
@@ -1167,7 +2327,6 @@
             }
         }
         
-        // Function to display real API data on your website
         async function displayRealAPIData() {
             const apiContent = document.getElementById('apiContent');
             if (!apiContent) return;
@@ -1236,7 +2395,6 @@
             }
         }
         
-        // Function to test API connection
         async function testRealAPI() {
             const resultDiv = document.getElementById('apiTestResult');
             if (!resultDiv) return;
@@ -1268,7 +2426,6 @@
             }
         }
         
-        // Function to format JSON with colors
         function formatJSON(obj) {
             const json = JSON.stringify(obj, null, 2);
             return json
@@ -1278,15 +2435,10 @@
                 .replace(/\b(true|false|null)\b/g, '<span class="json-boolean">$1</span>');
         }
         
-        // Initialize real API on page load
         window.addEventListener('load', async () => {
-            // Update visitor count
             await updateVisitorCount();
-            
-            // Display API data
             await displayRealAPIData();
             
-            // Add refresh button listener
             const refreshButton = document.getElementById('refreshAPI');
             if (refreshButton) {
                 refreshButton.addEventListener('click', async () => {
@@ -1294,7 +2446,6 @@
                 });
             }
             
-            // Make API functions globally available
             window.pagesoftwoRealAPI = {
                 getData: () => callRealAPI('/api/data'),
                 getProjects: () => callRealAPI('/api/projects'),
@@ -1303,11 +2454,8 @@
                 addLog: (data) => callRealAPI('/api/log', 'POST', data),
                 testConnection: testRealAPI
             };
-            
-            console.log('Real API loaded. Access via window.pagesoftwoRealAPI');
         });
         
-        // Function for API tester page
         async function testAPIEndpoint() {
             const endpoint = document.getElementById('apiEndpoint').value;
             const testResult = document.getElementById('testResult');
@@ -1327,9 +2475,7 @@
             }
         }
         
-        // Initialize API page
         function initializeAPI() {
-            // Setup API tester
             const testButton = document.getElementById('testApi');
             const testResult = document.getElementById('testResult');
             const apiEndpoint = document.getElementById('apiEndpoint');
@@ -1338,7 +2484,6 @@
                 testButton.addEventListener('click', testAPIEndpoint);
             }
             
-            // Load example data
             async function loadExampleData() {
                 try {
                     const data = await callRealAPI('/api/data');
@@ -1357,11 +2502,9 @@
             loadExampleData();
         }
         
-        // Initialize API if we're on the API page
         if (window.location.hash === '#api') {
             setTimeout(initializeAPI, 100);
         }
-        
     </script>
 </body>
 </html>
