@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Sleep Competition · Dream League Tournament</title>
+    <title>Sleep Competition · Live Timers · Dream League</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -138,10 +138,35 @@
         }
         .time-value {
             font-family: monospace;
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: 1px;
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: 2px;
             color: #f3e8ff;
+            background: #0f0719;
+            display: inline-block;
+            padding: 0.2rem 1rem;
+            border-radius: 2rem;
+        }
+        .timer-controls {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+            justify-content: center;
+        }
+        .timer-controls.hidden-for-users {
+            display: none;
+        }
+        .timer-btn {
+            background: #2a1a42;
+            border: 1px solid #854dff;
+            border-radius: 40px;
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            color: white;
+        }
+        .timer-btn:hover {
+            background: #4c1d95;
         }
         .customize-row {
             display: flex;
@@ -367,12 +392,15 @@
             font-size: 0.8rem;
             margin-top: 10px;
         }
+        .reset-timer-btn {
+            background: #7c3aed;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="tourney-header">
-        <div><i class="fas fa-trophy" style="color:#fbbf24;"></i> <strong>SLEEP GRAND SLAM</strong></div>
+        <div><i class="fas fa-trophy" style="color:#fbbf24;"></i> <strong>SLEEP GRAND SLAM · LIVE TIMERS</strong></div>
         <div class="round-badge" id="roundNameDisplay">Round of 16</div>
         <div style="display: flex; gap: 10px;">
             <div class="leaderboard-trigger" id="showLeaderboardBtn"><i class="fas fa-chart-line"></i> Hall of Fame</div>
@@ -382,7 +410,7 @@
 
     <div id="contestantsGrid" class="contestants-grid"></div>
 
-    <!-- Admin Panel (hidden until password entered) -->
+    <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel admin-hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h2><i class="fas fa-sliders-h"></i> Tournament Director</h2>
@@ -410,7 +438,6 @@
             <button id="randomWinnerBtn" class="auto-btn" style="background:#db2777;"><i class="fas fa-dice-d6"></i> Randomly Pick Winner</button>
         </div>
         
-        <!-- Contestant Management Section (Name + Image + Delete) -->
         <div style="background: #1f1233; border-radius: 1.5rem; padding: 1rem; margin: 1rem 0;">
             <h3><i class="fas fa-users"></i> Manage Contestants</h3>
             <p style="font-size:0.75rem; margin-bottom:10px;">Edit names, change images, or delete contestants</p>
@@ -451,14 +478,12 @@
 </div>
 
 <script>
-    // ADMIN PASSWORD
-    const ADMIN_PASSWORD = "PagesADMIN2026";
-    
-    // STORAGE KEYS
-    const STORAGE_CONTESTANTS = "sleep_contestants_manage";
-    const STORAGE_VOTES = "sleep_votes_manage";
-    const STORAGE_ROUND = "sleep_round_manage";
-    const STORAGE_WINS = "sleep_wins_manage";
+    const ADMIN_PASSWORD = "PagesADMIN2025";
+    const STORAGE_CONTESTANTS = "sleep_contestants_live";
+    const STORAGE_VOTES = "sleep_votes_live";
+    const STORAGE_ROUND = "sleep_round_live";
+    const STORAGE_WINS = "sleep_wins_live";
+    const STORAGE_START_TIMES = "sleep_start_times";
 
     let contestants = [];
     let votes = [];
@@ -467,6 +492,7 @@
     let autoIntervalId = null;
     let currentRoundWinnerId = null;
     let isAdminMode = false;
+    let timerIntervals = {};
 
     const ROUNDS = {
         R16: { key: "R16", name: "🏁 Round of 16", next: "QF", order: 1 },
@@ -475,14 +501,13 @@
         FINAL: { key: "FINAL", name: "👑 FINAL Championship", next: null, order: 4 }
     };
 
-    // Default contestants with image URLs
     const DEFAULT_CONTESTANTS = [
-        { id: "c1", name: "Dozing Derek", sleepSeconds: 5063, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Derek", avatarEmoji: "😴" },
-        { id: "c2", name: "Snorin' Sarah", sleepSeconds: 9287, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah", avatarEmoji: "💤" },
-        { id: "c3", name: "Nap Queen Nia", sleepSeconds: 3625, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nia", avatarEmoji: "👑" },
-        { id: "c4", name: "Deep Dave", sleepSeconds: 15234, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Dave", avatarEmoji: "🌊" },
-        { id: "c5", name: "Pillow Phantom", sleepSeconds: 267, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Phantom", avatarEmoji: "👻" },
-        { id: "c6", name: "Slumber Samurai", sleepSeconds: 8450, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Samurai", avatarEmoji: "⚔️" }
+        { id: "c1", name: "Dozing Derek", baseSeconds: 5063, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Derek", avatarEmoji: "😴" },
+        { id: "c2", name: "Snorin' Sarah", baseSeconds: 9287, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah", avatarEmoji: "💤" },
+        { id: "c3", name: "Nap Queen Nia", baseSeconds: 3625, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nia", avatarEmoji: "👑" },
+        { id: "c4", name: "Deep Dave", baseSeconds: 15234, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Dave", avatarEmoji: "🌊" },
+        { id: "c5", name: "Pillow Phantom", baseSeconds: 267, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Phantom", avatarEmoji: "👻" },
+        { id: "c6", name: "Slumber Samurai", baseSeconds: 8450, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Samurai", avatarEmoji: "⚔️" }
     ];
 
     function loadData() {
@@ -507,19 +532,55 @@
             contestants.forEach(c => { wins[c.id] = 0; });
         }
         
+        const storedStarts = localStorage.getItem(STORAGE_START_TIMES);
+        if(storedStarts) {
+            const startTimes = JSON.parse(storedStarts);
+            contestants.forEach(c => {
+                if(startTimes[c.id]) {
+                    c.startTimestamp = startTimes[c.id];
+                } else {
+                    c.startTimestamp = Date.now() - (c.baseSeconds * 1000);
+                }
+            });
+        } else {
+            contestants.forEach(c => {
+                c.startTimestamp = Date.now() - (c.baseSeconds * 1000);
+            });
+        }
+        
         contestants.forEach(c => { if(wins[c.id] === undefined) wins[c.id] = 0; });
     }
 
-    function saveContestants() { localStorage.setItem(STORAGE_CONTESTANTS, JSON.stringify(contestants)); }
+    function saveStartTimes() {
+        const startTimes = {};
+        contestants.forEach(c => {
+            startTimes[c.id] = c.startTimestamp;
+        });
+        localStorage.setItem(STORAGE_START_TIMES, JSON.stringify(startTimes));
+    }
+
+    function saveContestants() { 
+        localStorage.setItem(STORAGE_CONTESTANTS, JSON.stringify(contestants));
+        saveStartTimes();
+    }
     function saveVotes() { localStorage.setItem(STORAGE_VOTES, JSON.stringify(votes)); }
     function saveRound() { localStorage.setItem(STORAGE_ROUND, currentRound); }
     function saveWins() { localStorage.setItem(STORAGE_WINS, JSON.stringify(wins)); }
+
+    function getCurrentSeconds(contestant) {
+        const elapsedMs = Date.now() - contestant.startTimestamp;
+        return Math.floor(elapsedMs / 1000);
+    }
+
+    function updateContestantBaseSeconds(contestant) {
+        contestant.baseSeconds = getCurrentSeconds(contestant);
+    }
 
     function formatTime(seconds) {
         let h = Math.floor(seconds / 3600);
         let m = Math.floor((seconds % 3600) / 60);
         let s = seconds % 60;
-        return `${h}h ${m}m ${s}s`;
+        return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }
 
     function parseTimeToSeconds(input) {
@@ -561,6 +622,24 @@
         }
     }
 
+    function startTimerForContestant(contestantId) {
+        if(timerIntervals[contestantId]) clearInterval(timerIntervals[contestantId]);
+        timerIntervals[contestantId] = setInterval(() => {
+            const timeSpan = document.getElementById(`timeDisplay-${contestantId}`);
+            if(timeSpan) {
+                const cont = contestants.find(c => c.id === contestantId);
+                if(cont) {
+                    timeSpan.innerText = formatTime(getCurrentSeconds(cont));
+                }
+            }
+        }, 1000);
+    }
+
+    function stopAllTimers() {
+        Object.values(timerIntervals).forEach(interval => clearInterval(interval));
+        timerIntervals = {};
+    }
+
     function renderContestants() {
         const grid = document.getElementById("contestantsGrid");
         if(!grid) return;
@@ -575,6 +654,7 @@
             const voteCount = votes.filter(v => v.contestantId === cont.id).length;
             const isWinner = (currentRoundWinnerId === cont.id);
             const winCount = wins[cont.id] || 0;
+            const currentSecs = getCurrentSeconds(cont);
             
             const card = document.createElement("div");
             card.className = `contestant-card ${isWinner ? 'winner-glow' : ''}`;
@@ -589,12 +669,15 @@
                     </div>
                 </div>
                 <div class="time-box">
-                    <div><i class="fas fa-hourglass-half"></i> Sleep duration</div>
-                    <div class="time-value" id="timeShow-${cont.id}">${formatTime(cont.sleepSeconds)}</div>
+                    <div><i class="fas fa-hourglass-half"></i> Sleep Duration (LIVE)</div>
+                    <div class="time-value" id="timeDisplay-${cont.id}">${formatTime(currentSecs)}</div>
+                </div>
+                <div class="timer-controls" id="timerControls-${cont.id}">
+                    <button class="timer-btn reset-timer-btn" data-id="${cont.id}" data-action="reset"><i class="fas fa-clock"></i> Reset Timer</button>
                 </div>
                 <div class="customize-row" id="customizeRow-${cont.id}">
-                    <input type="text" id="timeInput-${cont.id}" placeholder="e.g., 1h 24m 23s" value="${formatTime(cont.sleepSeconds)}">
-                    <button class="set-time-btn" data-id="${cont.id}"><i class="fas fa-pen"></i> Set</button>
+                    <input type="text" id="timeInput-${cont.id}" placeholder="Set specific time e.g., 1h 24m 23s" value="${formatTime(currentSecs)}">
+                    <button class="set-time-btn" data-id="${cont.id}"><i class="fas fa-pen"></i> Set Time</button>
                 </div>
                 <div class="vote-section">
                     <input type="text" id="voteName-${cont.id}" class="vote-input" placeholder="Your name">
@@ -603,9 +686,10 @@
                 <div class="vote-count"><i class="fas fa-users"></i> Votes: ${voteCount}</div>
             `;
             grid.appendChild(card);
+            startTimerForContestant(cont.id);
         });
         
-        // Apply visibility for customize rows based on admin mode
+        // Apply visibility based on admin mode
         document.querySelectorAll("[id^='customizeRow-']").forEach(row => {
             if(isAdminMode) {
                 row.classList.remove("hidden-for-users");
@@ -614,21 +698,42 @@
             }
         });
         
+        document.querySelectorAll("[id^='timerControls-']").forEach(controls => {
+            if(isAdminMode) {
+                controls.classList.remove("hidden-for-users");
+            } else {
+                controls.classList.add("hidden-for-users");
+            }
+        });
+        
+        document.querySelectorAll(".reset-timer-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                if(!isAdminMode) return;
+                const id = btn.getAttribute("data-id");
+                const idx = contestants.findIndex(c => c.id === id);
+                if(idx !== -1) {
+                    contestants[idx].startTimestamp = Date.now();
+                    updateContestantBaseSeconds(contestants[idx]);
+                    saveContestants();
+                    renderContestants();
+                }
+            });
+        });
+        
         document.querySelectorAll(".set-time-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 if(!isAdminMode) return;
                 const id = btn.getAttribute("data-id");
                 const inputEl = document.getElementById(`timeInput-${id}`);
                 if(inputEl) {
-                    const seconds = parseTimeToSeconds(inputEl.value);
-                    if(seconds !== null && seconds >= 0) {
+                    const targetSeconds = parseTimeToSeconds(inputEl.value);
+                    if(targetSeconds !== null && targetSeconds >= 0) {
                         const idx = contestants.findIndex(c => c.id === id);
                         if(idx !== -1) {
-                            contestants[idx].sleepSeconds = seconds;
+                            contestants[idx].startTimestamp = Date.now() - (targetSeconds * 1000);
+                            updateContestantBaseSeconds(contestants[idx]);
                             saveContestants();
                             renderContestants();
-                            renderVotesTable();
-                            renderContestantManageList();
                         }
                     } else {
                         alert("Invalid format. Use like: 1h 24m 23s or 1:24:23");
@@ -673,7 +778,6 @@
             container.appendChild(row);
         });
         
-        // Save name/image/emoji changes
         document.querySelectorAll(".edit-name-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 const id = btn.getAttribute("data-id");
@@ -682,9 +786,7 @@
                 const emojiInput = document.getElementById(`emoji_${id}`);
                 const idx = contestants.findIndex(c => c.id === id);
                 if(idx !== -1) {
-                    if(nameInput.value.trim()) {
-                        contestants[idx].name = nameInput.value.trim();
-                    }
+                    if(nameInput.value.trim()) contestants[idx].name = nameInput.value.trim();
                     contestants[idx].imageUrl = urlInput.value;
                     contestants[idx].avatarEmoji = emojiInput.value || "😴";
                     saveContestants();
@@ -695,16 +797,15 @@
             });
         });
         
-        // Delete contestant
         document.querySelectorAll(".delete-contestant-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 const id = btn.getAttribute("data-id");
                 const contestant = contestants.find(c => c.id === id);
-                if(confirm(`Delete "${contestant?.name}"? This will also remove all votes for them.`)) {
+                if(confirm(`Delete "${contestant?.name}"?`)) {
+                    if(timerIntervals[id]) clearInterval(timerIntervals[id]);
+                    delete timerIntervals[id];
                     contestants = contestants.filter(c => c.id !== id);
-                    // Remove votes for this contestant
                     votes = votes.filter(v => v.contestantId !== id);
-                    // Remove wins entry
                     delete wins[id];
                     saveContestants();
                     saveVotes();
@@ -733,47 +834,31 @@
     function renderVotesTable() {
         const tbody = document.getElementById("votesTableBody");
         if(!tbody) return;
-        
         if(votes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No votes yet</td></table>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No votes yet</td></tr>';
             return;
         }
-        
         const contestantMap = {};
         contestants.forEach(c => { contestantMap[c.id] = c.name; });
-        
         tbody.innerHTML = "";
         votes.slice().reverse().forEach(vote => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${escapeHtml(vote.voterName)}</td>
-                    <td>${escapeHtml(contestantMap[vote.contestantId] || '?')}</td>
-                    <td>${escapeHtml(vote.timestamp)}</td>
-                </tr>
-            `;
+            tbody.innerHTML += `<tr><td>${escapeHtml(vote.voterName)}</td><td>${escapeHtml(contestantMap[vote.contestantId] || '?')}</td><td>${escapeHtml(vote.timestamp)}</td></tr>`;
         });
     }
 
     function updateRoundDisplay() {
         const roundElem = document.getElementById("roundNameDisplay");
-        if(roundElem && ROUNDS[currentRound]) {
-            roundElem.innerText = ROUNDS[currentRound].name;
-        }
+        if(roundElem && ROUNDS[currentRound]) roundElem.innerText = ROUNDS[currentRound].name;
     }
 
     function declareWinnerAndAdvance(winnerId) {
         if(winnerId && contestants.find(c => c.id === winnerId)) {
             wins[winnerId] = (wins[winnerId] || 0) + 1;
             saveWins();
-            
             currentRoundWinnerId = winnerId;
             renderContestants();
-            setTimeout(() => {
-                currentRoundWinnerId = null;
-                renderContestants();
-            }, 3000);
+            setTimeout(() => { currentRoundWinnerId = null; renderContestants(); }, 3000);
         }
-        
         let nextRound = ROUNDS[currentRound]?.next;
         if(nextRound && ROUNDS[nextRound]) {
             currentRound = nextRound;
@@ -799,59 +884,41 @@
 
     function startAutoInterval(hours) {
         if(autoIntervalId) clearInterval(autoIntervalId);
-        const ms = hours * 60 * 60 * 1000;
-        autoIntervalId = setInterval(() => {
-            selectRandomWinnerAndAdvance();
-        }, ms);
-        const statusSpan = document.getElementById("autoStatus");
-        if(statusSpan) statusSpan.innerText = `⏰ Auto every ${hours}h`;
+        autoIntervalId = setInterval(() => selectRandomWinnerAndAdvance(), hours * 60 * 60 * 1000);
+        document.getElementById("autoStatus").innerText = `⏰ Auto every ${hours}h`;
         localStorage.setItem("sleep_auto_config", JSON.stringify({ hours, startTime: Date.now() }));
     }
 
     function stopAuto() {
-        if(autoIntervalId) {
-            clearInterval(autoIntervalId);
-            autoIntervalId = null;
-        }
-        const statusSpan = document.getElementById("autoStatus");
-        if(statusSpan) statusSpan.innerText = "⏸️ Off";
+        if(autoIntervalId) { clearInterval(autoIntervalId); autoIntervalId = null; }
+        document.getElementById("autoStatus").innerText = "⏸️ Off";
         localStorage.removeItem("sleep_auto_config");
     }
 
     function enableAdminMode() {
         isAdminMode = true;
-        const panel = document.getElementById("adminPanel");
-        if(panel) panel.classList.remove("admin-hidden");
+        document.getElementById("adminPanel").classList.remove("admin-hidden");
         renderContestants();
         renderVotesTable();
         renderContestantManageList();
         bindAdminEvents();
-        
         const savedAuto = localStorage.getItem("sleep_auto_config");
         if(savedAuto) {
-            try {
-                const cfg = JSON.parse(savedAuto);
-                startAutoInterval(cfg.hours);
-            } catch(e) {}
+            try { const cfg = JSON.parse(savedAuto); startAutoInterval(cfg.hours); } catch(e) {}
         }
     }
     
     function disableAdminMode() {
         isAdminMode = false;
-        const panel = document.getElementById("adminPanel");
-        if(panel) panel.classList.add("admin-hidden");
+        document.getElementById("adminPanel").classList.add("admin-hidden");
         renderContestants();
-        if(autoIntervalId) {
-            clearInterval(autoIntervalId);
-            autoIntervalId = null;
-        }
+        if(autoIntervalId) { clearInterval(autoIntervalId); autoIntervalId = null; }
     }
 
     let adminEventsBound = false;
     function bindAdminEvents() {
         if(adminEventsBound) return;
         adminEventsBound = true;
-        
         document.getElementById("roundLast16")?.addEventListener("click", () => { currentRound = "R16"; saveRound(); updateRoundDisplay(); renderContestants(); });
         document.getElementById("roundQF")?.addEventListener("click", () => { currentRound = "QF"; saveRound(); updateRoundDisplay(); renderContestants(); });
         document.getElementById("roundSF")?.addEventListener("click", () => { currentRound = "SF"; saveRound(); updateRoundDisplay(); renderContestants(); });
@@ -861,91 +928,54 @@
         document.getElementById("autoEvery3")?.addEventListener("click", () => { stopAuto(); startAutoInterval(72); });
         document.getElementById("autoWeekly")?.addEventListener("click", () => { stopAuto(); startAutoInterval(168); });
         document.getElementById("stopAuto")?.addEventListener("click", stopAuto);
-        
         document.getElementById("addContestantBtn")?.addEventListener("click", () => {
             const nameInput = document.getElementById("newContestantName");
-            if(nameInput && nameInput.value.trim()) {
+            if(nameInput?.value.trim()) {
                 const newId = "c_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
-                contestants.push({
-                    id: newId,
-                    name: nameInput.value.trim(),
-                    sleepSeconds: 0,
-                    imageUrl: "",
-                    avatarEmoji: "😪"
-                });
+                contestants.push({ id: newId, name: nameInput.value.trim(), baseSeconds: 0, startTimestamp: Date.now(), imageUrl: "", avatarEmoji: "😪" });
                 wins[newId] = 0;
-                saveContestants();
-                saveWins();
-                renderContestants();
-                renderVotesTable();
-                renderContestantManageList();
+                saveContestants(); saveWins();
+                renderContestants(); renderVotesTable(); renderContestantManageList();
                 nameInput.value = "";
-            } else {
-                alert("Enter a contestant name");
-            }
+            } else alert("Enter a contestant name");
         });
-        
         document.getElementById("resetAllBtn")?.addEventListener("click", () => {
-            if(confirm("RESET everything? All contestants, votes, wins will be lost.")) {
+            if(confirm("RESET everything?")) {
+                stopAllTimers();
                 contestants = JSON.parse(JSON.stringify(DEFAULT_CONTESTANTS));
-                votes = [];
-                wins = {};
-                contestants.forEach(c => { wins[c.id] = 0; });
-                currentRound = "R16";
-                currentRoundWinnerId = null;
-                saveContestants();
-                saveVotes();
-                saveWins();
-                saveRound();
-                renderContestants();
-                renderVotesTable();
-                renderContestantManageList();
-                updateRoundDisplay();
+                contestants.forEach(c => { c.startTimestamp = Date.now() - (c.baseSeconds * 1000); });
+                votes = []; wins = {};
+                contestants.forEach(c => wins[c.id] = 0);
+                currentRound = "R16"; currentRoundWinnerId = null;
+                saveContestants(); saveVotes(); saveWins(); saveRound();
+                renderContestants(); renderVotesTable(); renderContestantManageList(); updateRoundDisplay();
             }
         });
-        
         document.getElementById("clearVotesBtn")?.addEventListener("click", () => {
-            if(confirm("Clear all votes?")) {
-                votes = [];
-                saveVotes();
-                renderVotesTable();
-                renderContestants();
-            }
+            if(confirm("Clear all votes?")) { votes = []; saveVotes(); renderVotesTable(); renderContestants(); }
         });
     }
 
     function showLeaderboard() {
-        const sorted = [...contestants].sort((a, b) => (wins[b.id] || 0) - (wins[a.id] || 0));
+        const sorted = [...contestants].sort((a,b) => (wins[b.id]||0) - (wins[a.id]||0));
         let html = '<div class="leaderboard-item"><strong>Contestant</strong><strong>🏆 Wins</strong></div>';
-        sorted.forEach(c => {
-            html += `<div class="leaderboard-item"><span><i class="fas fa-user"></i> ${escapeHtml(c.name)}</span><span>${wins[c.id] || 0}</span></div>`;
-        });
-        const leaderboardDiv = document.getElementById("leaderboardList");
-        if(leaderboardDiv) leaderboardDiv.innerHTML = html;
-        const modal = document.getElementById("leaderboardModal");
-        if(modal) modal.style.display = "flex";
+        sorted.forEach(c => { html += `<div class="leaderboard-item"><span><i class="fas fa-user"></i> ${escapeHtml(c.name)}</span><span>${wins[c.id] || 0}</span></div>`; });
+        document.getElementById("leaderboardList").innerHTML = html;
+        document.getElementById("leaderboardModal").style.display = "flex";
     }
     
     function showPasswordModal() {
-        const modal = document.getElementById("passwordModal");
-        if(modal) modal.style.display = "flex";
-        const input = document.getElementById("adminPasswordInput");
-        if(input) {
-            input.value = "";
-            input.focus();
-        }
-        const errorDiv = document.getElementById("passwordError");
-        if(errorDiv) errorDiv.innerText = "";
+        document.getElementById("passwordModal").style.display = "flex";
+        document.getElementById("adminPasswordInput").focus();
+        document.getElementById("passwordError").innerText = "";
     }
     
     function checkPassword() {
-        const input = document.getElementById("adminPasswordInput");
-        const errorDiv = document.getElementById("passwordError");
-        if(input.value === ADMIN_PASSWORD) {
+        if(document.getElementById("adminPasswordInput").value === ADMIN_PASSWORD) {
             document.getElementById("passwordModal").style.display = "none";
             enableAdminMode();
         } else {
-            errorDiv.innerText = "Incorrect password. Access denied.";
+            document.getElementById("passwordError").innerText = "Incorrect password. Access denied.";
         }
     }
 
@@ -954,45 +984,18 @@
         renderContestants();
         renderVotesTable();
         updateRoundDisplay();
-        
-        const showBtn = document.getElementById("showLeaderboardBtn");
-        if(showBtn) showBtn.addEventListener("click", showLeaderboard);
-        
-        const adminLogin = document.getElementById("adminLoginBtn");
-        if(adminLogin) adminLogin.addEventListener("click", showPasswordModal);
-        
-        const adminLogout = document.getElementById("adminLogoutBtn");
-        if(adminLogout) adminLogout.addEventListener("click", disableAdminMode);
-        
-        const closePassword = document.getElementById("closePasswordModal");
-        if(closePassword) closePassword.addEventListener("click", () => {
-            document.getElementById("passwordModal").style.display = "none";
-        });
-        
-        const submitBtn = document.getElementById("submitPasswordBtn");
-        if(submitBtn) submitBtn.addEventListener("click", checkPassword);
-        
-        const passwordInput = document.getElementById("adminPasswordInput");
-        if(passwordInput) {
-            passwordInput.addEventListener("keypress", (e) => {
-                if(e.key === "Enter") checkPassword();
-            });
-        }
-        
-        const closeModal = document.getElementById("closeModal");
-        if(closeModal) closeModal.addEventListener("click", () => {
-            const modal = document.getElementById("leaderboardModal");
-            if(modal) modal.style.display = "none";
-        });
-        
+        document.getElementById("showLeaderboardBtn")?.addEventListener("click", showLeaderboard);
+        document.getElementById("adminLoginBtn")?.addEventListener("click", showPasswordModal);
+        document.getElementById("adminLogoutBtn")?.addEventListener("click", disableAdminMode);
+        document.getElementById("closePasswordModal")?.addEventListener("click", () => document.getElementById("passwordModal").style.display = "none");
+        document.getElementById("submitPasswordBtn")?.addEventListener("click", checkPassword);
+        document.getElementById("adminPasswordInput")?.addEventListener("keypress", (e) => { if(e.key === "Enter") checkPassword(); });
+        document.getElementById("closeModal")?.addEventListener("click", () => document.getElementById("leaderboardModal").style.display = "none");
         window.addEventListener("click", (e) => {
-            const modal = document.getElementById("leaderboardModal");
-            if(e.target === modal) modal.style.display = "none";
-            const pwdModal = document.getElementById("passwordModal");
-            if(e.target === pwdModal) pwdModal.style.display = "none";
+            if(e.target === document.getElementById("leaderboardModal")) document.getElementById("leaderboardModal").style.display = "none";
+            if(e.target === document.getElementById("passwordModal")) document.getElementById("passwordModal").style.display = "none";
         });
     }
-    
     init();
 </script>
 </body>
