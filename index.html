@@ -307,7 +307,7 @@
             flex-wrap: wrap;
         }
         .image-url-input {
-            flex: 2;
+            flex: 1;
             background: #1f0f33;
             border: 1px solid #a855f7;
             border-radius: 40px;
@@ -315,20 +315,28 @@
             color: white;
             font-size: 0.8rem;
         }
+        .name-edit-input {
+            background: #1f0f33;
+            border: 1px solid #a855f7;
+            border-radius: 40px;
+            padding: 8px 12px;
+            color: white;
+            width: 140px;
+        }
         i { margin-right: 6px; }
         button { cursor: pointer; }
-        .edit-img-btn {
+        .edit-img-btn, .edit-name-btn, .delete-contestant-btn {
             background: #7c3aed;
             border: none;
             padding: 6px 12px;
             border-radius: 40px;
             color: white;
         }
-        .admin-badge-header {
-            background: #7c3aed;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.7rem;
+        .delete-contestant-btn {
+            background: #dc2626;
+        }
+        .delete-contestant-btn:hover {
+            background: #ef4444;
         }
         .password-modal {
             max-width: 400px;
@@ -402,11 +410,11 @@
             <button id="randomWinnerBtn" class="auto-btn" style="background:#db2777;"><i class="fas fa-dice-d6"></i> Randomly Pick Winner</button>
         </div>
         
-        <!-- Image customization section -->
+        <!-- Contestant Management Section (Name + Image + Delete) -->
         <div style="background: #1f1233; border-radius: 1.5rem; padding: 1rem; margin: 1rem 0;">
-            <h3><i class="fas fa-images"></i> Customize Contestant Images</h3>
-            <p style="font-size:0.75rem; margin-bottom:10px;">Paste image URLs (JPG/PNG) or use emoji as fallback</p>
-            <div id="imageEditList"></div>
+            <h3><i class="fas fa-users"></i> Manage Contestants</h3>
+            <p style="font-size:0.75rem; margin-bottom:10px;">Edit names, change images, or delete contestants</p>
+            <div id="contestantManageList"></div>
         </div>
         
         <div style="display:flex; gap:10px; margin:1rem 0;">
@@ -447,10 +455,10 @@
     const ADMIN_PASSWORD = "PagesADMIN2026";
     
     // STORAGE KEYS
-    const STORAGE_CONTESTANTS = "sleep_contestants_password";
-    const STORAGE_VOTES = "sleep_votes_password";
-    const STORAGE_ROUND = "sleep_round_password";
-    const STORAGE_WINS = "sleep_wins_password";
+    const STORAGE_CONTESTANTS = "sleep_contestants_manage";
+    const STORAGE_VOTES = "sleep_votes_manage";
+    const STORAGE_ROUND = "sleep_round_manage";
+    const STORAGE_WINS = "sleep_wins_manage";
 
     let contestants = [];
     let votes = [];
@@ -620,6 +628,7 @@
                             saveContestants();
                             renderContestants();
                             renderVotesTable();
+                            renderContestantManageList();
                         }
                     } else {
                         alert("Invalid format. Use like: 1h 24m 23s or 1:24:23");
@@ -644,8 +653,8 @@
         updateRoundDisplay();
     }
 
-    function renderImageEditList() {
-        const container = document.getElementById("imageEditList");
+    function renderContestantManageList() {
+        const container = document.getElementById("contestantManageList");
         if(!container) return;
         
         container.innerHTML = "";
@@ -655,26 +664,54 @@
             row.innerHTML = `
                 <img class="image-preview" src="${escapeHtml(cont.imageUrl || '')}" onerror="this.src=''; this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div style="display:${cont.imageUrl ? 'none' : 'flex'}; width:50px;height:50px;background:#7c3aed;border-radius:50%;align-items:center;justify-content:center;font-size:1.5rem;">${cont.avatarEmoji || '😴'}</div>
-                <strong style="min-width:120px;">${escapeHtml(cont.name)}</strong>
-                <input type="text" class="image-url-input" id="imgUrl_${cont.id}" placeholder="Image URL (jpg/png)" value="${escapeHtml(cont.imageUrl || '')}">
-                <input type="text" id="emoji_${cont.id}" placeholder="Fallback emoji" style="width:80px;background:#1f0f33;border-radius:40px;padding:6px;text-align:center;" value="${cont.avatarEmoji || '😴'}">
-                <button class="edit-img-btn" data-id="${cont.id}">Update Image</button>
+                <input type="text" class="name-edit-input" id="nameEdit_${cont.id}" value="${escapeHtml(cont.name)}" placeholder="Name">
+                <input type="text" class="image-url-input" id="imgUrl_${cont.id}" placeholder="Image URL" value="${escapeHtml(cont.imageUrl || '')}">
+                <input type="text" id="emoji_${cont.id}" placeholder="Emoji" style="width:60px;background:#1f0f33;border-radius:40px;padding:6px;text-align:center;" value="${cont.avatarEmoji || '😴'}">
+                <button class="edit-name-btn" data-id="${cont.id}"><i class="fas fa-save"></i> Save</button>
+                <button class="delete-contestant-btn" data-id="${cont.id}"><i class="fas fa-trash"></i> Delete</button>
             `;
             container.appendChild(row);
         });
         
-        document.querySelectorAll(".edit-img-btn").forEach(btn => {
+        // Save name/image/emoji changes
+        document.querySelectorAll(".edit-name-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 const id = btn.getAttribute("data-id");
+                const nameInput = document.getElementById(`nameEdit_${id}`);
                 const urlInput = document.getElementById(`imgUrl_${id}`);
                 const emojiInput = document.getElementById(`emoji_${id}`);
                 const idx = contestants.findIndex(c => c.id === id);
                 if(idx !== -1) {
+                    if(nameInput.value.trim()) {
+                        contestants[idx].name = nameInput.value.trim();
+                    }
                     contestants[idx].imageUrl = urlInput.value;
                     contestants[idx].avatarEmoji = emojiInput.value || "😴";
                     saveContestants();
                     renderContestants();
-                    renderImageEditList();
+                    renderContestantManageList();
+                    renderVotesTable();
+                }
+            });
+        });
+        
+        // Delete contestant
+        document.querySelectorAll(".delete-contestant-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const id = btn.getAttribute("data-id");
+                const contestant = contestants.find(c => c.id === id);
+                if(confirm(`Delete "${contestant?.name}"? This will also remove all votes for them.`)) {
+                    contestants = contestants.filter(c => c.id !== id);
+                    // Remove votes for this contestant
+                    votes = votes.filter(v => v.contestantId !== id);
+                    // Remove wins entry
+                    delete wins[id];
+                    saveContestants();
+                    saveVotes();
+                    saveWins();
+                    renderContestants();
+                    renderContestantManageList();
+                    renderVotesTable();
                 }
             });
         });
@@ -698,7 +735,7 @@
         if(!tbody) return;
         
         if(votes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No votes yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No votes yet</td></table>';
             return;
         }
         
@@ -787,10 +824,9 @@
         if(panel) panel.classList.remove("admin-hidden");
         renderContestants();
         renderVotesTable();
-        renderImageEditList();
+        renderContestantManageList();
         bindAdminEvents();
         
-        // Restore auto interval if exists
         const savedAuto = localStorage.getItem("sleep_auto_config");
         if(savedAuto) {
             try {
@@ -842,7 +878,7 @@
                 saveWins();
                 renderContestants();
                 renderVotesTable();
-                renderImageEditList();
+                renderContestantManageList();
                 nameInput.value = "";
             } else {
                 alert("Enter a contestant name");
@@ -863,7 +899,7 @@
                 saveRound();
                 renderContestants();
                 renderVotesTable();
-                renderImageEditList();
+                renderContestantManageList();
                 updateRoundDisplay();
             }
         });
