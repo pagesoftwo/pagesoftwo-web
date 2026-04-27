@@ -451,7 +451,7 @@
             <span style="font-size:0.7rem; color:#fbbf24;">Adds win to leaderboard, then resets to Round of 16</span>
         </div>
         
-        <!-- Simple Win Adjustment for each contestant (inline on cards) -->
+        <!-- Simple Win Adjustment for each contestant -->
         <div style="background: #1f1233; border-radius: 1.5rem; padding: 1rem; margin: 1rem 0;">
             <h3><i class="fas fa-chart-simple"></i> Adjust Tournament Wins</h3>
             <p style="font-size:0.75rem; margin-bottom:10px;">Click +/- next to any contestant name below to add or remove wins</p>
@@ -494,12 +494,12 @@
 
 <script>
     const ADMIN_PASSWORD = "PagesADMIN2025";
-    const STORAGE_CONTESTANTS = "sleep_contestants_final_v3";
-    const STORAGE_VOTES = "sleep_votes_final_v3";
-    const STORAGE_ROUND = "sleep_round_final_v3";
-    const STORAGE_WINS = "sleep_wins_final_v3";
-    const STORAGE_START_TIMES = "sleep_start_times_final_v3";
-    const STORAGE_LAST_UPDATE = "sleep_last_update_final_v3";
+    const STORAGE_CONTESTANTS = "sleep_contestants_final_v4";
+    const STORAGE_VOTES = "sleep_votes_final_v4";
+    const STORAGE_ROUND = "sleep_round_final_v4";
+    const STORAGE_WINS = "sleep_wins_final_v4";
+    const STORAGE_START_TIMES = "sleep_start_times_final_v4";
+    const STORAGE_LAST_UPDATE = "sleep_last_update_final_v4";
 
     let contestants = [];
     let votes = [];
@@ -612,11 +612,15 @@
         return isNaN(num) ? null : num;
     }
 
-    function escapeHtml(str) { if(!str) return ""; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+    function escapeHtml(str) { 
+        if(!str) return ""; 
+        return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); 
+    }
 
     function getProfileImageHtml(contestant) {
         if(contestant.imageUrl && contestant.imageUrl.trim()) {
-            return `<img src="${escapeHtml(contestant.imageUrl)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'width:75px;height:75px;background:linear-gradient(135deg,#7c3aed,#c084fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;\'>${contestant.avatarEmoji || '😴'}</div>';">`;
+            const escapedUrl = contestant.imageUrl.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<img src="${escapedUrl}" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'width:75px;height:75px;background:linear-gradient(135deg,#7c3aed,#c084fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;\'>${contestant.avatarEmoji || '😴'}</div>';">`;
         }
         return `<div style="width:75px;height:75px;background:linear-gradient(135deg,#7c3aed,#c084fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;">${contestant.avatarEmoji || '😴'}</div>`;
     }
@@ -711,8 +715,14 @@
             div.style.background = "#2a1a42";
             div.style.borderRadius = "2rem";
             div.style.marginBottom = "8px";
+            // Fixed: Properly escape the name and handle image URL safely
+            const safeName = escapeHtml(cont.name);
+            const safeImageUrl = cont.imageUrl ? cont.imageUrl.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
             div.innerHTML = `
-                <span><img class="profile-img" style="width:32px;height:32px;margin-right:8px;" src="${cont.imageUrl || ''}" onerror="this.style.display='none'"> ${escapeHtml(cont.name)}</span>
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <img class="profile-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" src="${safeImageUrl}" onerror="this.style.display='none'">
+                    <span>${safeName}</span>
+                </span>
                 <div class="win-adjust">
                     <button class="win-minus" data-id="${cont.id}">-</button>
                     <span class="win-count">${wins[cont.id] || 0}</span>
@@ -746,7 +756,9 @@
         const contestantMap = {};
         contestants.forEach(c => { contestantMap[c.id] = c.name; });
         tbody.innerHTML = "";
-        votes.slice().reverse().forEach(v => { tbody.innerHTML += `<tr><td>${escapeHtml(v.voterName)}</td><td>${escapeHtml(contestantMap[v.contestantId] || '?')}</td><td>${escapeHtml(v.timestamp)}</td></tr>`; });
+        votes.slice().reverse().forEach(v => { 
+            tbody.innerHTML += `<tr><td>${escapeHtml(v.voterName)}</td><td>${escapeHtml(contestantMap[v.contestantId] || '?')}</td><td>${escapeHtml(v.timestamp)}</td></tr>`; 
+        });
     }
 
     function updateRoundDisplay() {
@@ -754,7 +766,6 @@
         if(elem && ROUNDS[currentRound]) elem.innerText = ROUNDS[currentRound].name;
         const winnerControls = document.querySelector(".winner-controls");
         if(winnerControls) winnerControls.style.display = currentRound === "FINAL" ? "flex" : "none";
-        // Update finals dropdown
         const select = document.getElementById("finalsWinnerSelect");
         if(select && isAdminMode) {
             select.innerHTML = '<option value="">-- Pick Champion --</option>';
@@ -868,6 +879,3 @@
 </script>
 </body>
 </html>
-
-
-
