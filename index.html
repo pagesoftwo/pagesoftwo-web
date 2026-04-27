@@ -303,7 +303,7 @@
             background: #20153a;
             border-radius: 2rem;
             padding: 2rem;
-            max-width: 600px;
+            max-width: 500px;
             width: 90%;
             border: 1px solid #c084fc;
             max-height: 80vh;
@@ -323,58 +323,8 @@
             padding: 8px;
             border-bottom: 1px solid #7e22ce;
         }
-        .image-preview {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 10px;
-        }
-        .contestant-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            background: #2a1a42;
-            padding: 10px;
-            border-radius: 1rem;
-            flex-wrap: wrap;
-        }
-        .image-url-input {
-            flex: 1;
-            background: #1f0f33;
-            border: 1px solid #a855f7;
-            border-radius: 40px;
-            padding: 8px 12px;
-            color: white;
-            font-size: 0.8rem;
-        }
-        .name-edit-input {
-            background: #1f0f33;
-            border: 1px solid #a855f7;
-            border-radius: 40px;
-            padding: 8px 12px;
-            color: white;
-            width: 140px;
-        }
         i { margin-right: 6px; }
         button { cursor: pointer; }
-        .edit-img-btn, .edit-name-btn, .delete-contestant-btn, .adjust-wins-btn {
-            background: #7c3aed;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 40px;
-            color: white;
-        }
-        .delete-contestant-btn {
-            background: #dc2626;
-        }
-        .delete-contestant-btn:hover {
-            background: #ef4444;
-        }
-        .adjust-wins-btn {
-            background: #059669;
-        }
         .password-modal {
             max-width: 400px;
             text-align: center;
@@ -404,9 +354,6 @@
             font-size: 0.8rem;
             margin-top: 10px;
         }
-        .reset-timer-btn {
-            background: #7c3aed;
-        }
         .refresh-notice {
             position: fixed;
             bottom: 20px;
@@ -430,6 +377,31 @@
             color: white;
             font-size: 0.9rem;
         }
+        .win-adjust {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1f1233;
+            padding: 4px 12px;
+            border-radius: 40px;
+            margin-left: 10px;
+        }
+        .win-adjust button {
+            background: #059669;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .win-adjust button.minus { background: #dc2626; }
+        .win-count {
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -445,7 +417,7 @@
 
     <div id="contestantsGrid" class="contestants-grid"></div>
 
-    <!-- Admin Panel -->
+    <!-- Admin Panel (simplified - no contestant editor) -->
     <div id="adminPanel" class="admin-panel admin-hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h2><i class="fas fa-sliders-h"></i> Tournament Director</h2>
@@ -479,20 +451,20 @@
             <span style="font-size:0.7rem; color:#fbbf24;">Adds win to leaderboard, then resets to Round of 16</span>
         </div>
         
+        <!-- Simple Win Adjustment for each contestant (inline on cards) -->
         <div style="background: #1f1233; border-radius: 1.5rem; padding: 1rem; margin: 1rem 0;">
-            <h3><i class="fas fa-users"></i> Manage Contestants</h3>
-            <p style="font-size:0.75rem; margin-bottom:10px;">Edit names, change images, add/remove wins, or delete contestants</p>
-            <div id="contestantManageList"></div>
-        </div>
-        
-        <div style="display:flex; gap:10px; margin:1rem 0;">
-            <input type="text" id="newContestantName" placeholder="New sleeper name" style="flex:2; background:#1f0f33; border-radius:60px; padding:10px; border:1px solid #a855f7; color:white;">
-            <button id="addContestantBtn" style="background:#7e22ce; border-radius:60px; padding:0 20px; border:none; color:white;">+ Add</button>
-            <button id="resetAllBtn" style="background:#9f1239; border-radius:60px; padding:0 20px; border:none; color:white;">Reset All</button>
+            <h3><i class="fas fa-chart-simple"></i> Adjust Tournament Wins</h3>
+            <p style="font-size:0.75rem; margin-bottom:10px;">Click +/- next to any contestant name below to add or remove wins</p>
+            <div id="winAdjustList"></div>
         </div>
         
         <h3>All Votes</h3>
-        <div style="overflow-x:auto;"><table class="votes-table"><thead><tr><th>Voter</th><th>Voted for</th><th>Time</th></tr></thead><tbody id="votesTableBody"></tbody></table></div>
+        <div style="overflow-x:auto;">
+            <table class="votes-table">
+                <thead><tr><th>Voter</th><th>Voted for</th><th>Time</th></tr></thead>
+                <tbody id="votesTableBody"></tbody>
+            </table>
+        </div>
         <button id="clearVotesBtn" style="background:#b91c1c; margin-top:1rem; padding:8px 18px; border-radius:40px; border:none; color:white;">Clear Votes</button>
     </div>
 </div>
@@ -522,12 +494,12 @@
 
 <script>
     const ADMIN_PASSWORD = "PagesADMIN2025";
-    const STORAGE_CONTESTANTS = "sleep_contestants_final_v2";
-    const STORAGE_VOTES = "sleep_votes_final_v2";
-    const STORAGE_ROUND = "sleep_round_final_v2";
-    const STORAGE_WINS = "sleep_wins_final_v2";
-    const STORAGE_START_TIMES = "sleep_start_times_final_v2";
-    const STORAGE_LAST_UPDATE = "sleep_last_update_final_v2";
+    const STORAGE_CONTESTANTS = "sleep_contestants_final_v3";
+    const STORAGE_VOTES = "sleep_votes_final_v3";
+    const STORAGE_ROUND = "sleep_round_final_v3";
+    const STORAGE_WINS = "sleep_wins_final_v3";
+    const STORAGE_START_TIMES = "sleep_start_times_final_v3";
+    const STORAGE_LAST_UPDATE = "sleep_last_update_final_v3";
 
     let contestants = [];
     let votes = [];
@@ -726,73 +698,40 @@
         updateRoundDisplay();
     }
 
-    function renderContestantManageList() {
-        const container = document.getElementById("contestantManageList");
+    function renderWinAdjustList() {
+        const container = document.getElementById("winAdjustList");
         if(!container) return;
         container.innerHTML = "";
         contestants.forEach(cont => {
-            const row = document.createElement("div");
-            row.className = "contestant-row";
-            row.innerHTML = `
-                <img class="image-preview" src="${escapeHtml(cont.imageUrl || '')}" onerror="this.src=''; this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div style="display:${cont.imageUrl ? 'none' : 'flex'}; width:50px;height:50px;background:#7c3aed;border-radius:50%;align-items:center;justify-content:center;font-size:1.5rem;">${cont.avatarEmoji || '😴'}</div>
-                <input type="text" class="name-edit-input" id="nameEdit_${cont.id}" value="${escapeHtml(cont.name)}">
-                <input type="text" class="image-url-input" id="imgUrl_${cont.id}" placeholder="Image URL" value="${escapeHtml(cont.imageUrl || '')}">
-                <input type="text" id="emoji_${cont.id}" placeholder="Emoji" style="width:60px;text-align:center;" value="${cont.avatarEmoji || '😴'}">
-                <div style="display:flex; gap:5px;">
-                    <button class="adjust-wins-btn" data-id="${cont.id}" data-delta="-1"><i class="fas fa-minus"></i></button>
-                    <span style="min-width:40px; text-align:center;">🏆 ${wins[cont.id] || 0}</span>
-                    <button class="adjust-wins-btn" data-id="${cont.id}" data-delta="1"><i class="fas fa-plus"></i></button>
+            const div = document.createElement("div");
+            div.style.display = "flex";
+            div.style.alignItems = "center";
+            div.style.justifyContent = "space-between";
+            div.style.padding = "8px 12px";
+            div.style.background = "#2a1a42";
+            div.style.borderRadius = "2rem";
+            div.style.marginBottom = "8px";
+            div.innerHTML = `
+                <span><img class="profile-img" style="width:32px;height:32px;margin-right:8px;" src="${cont.imageUrl || ''}" onerror="this.style.display='none'"> ${escapeHtml(cont.name)}</span>
+                <div class="win-adjust">
+                    <button class="win-minus" data-id="${cont.id}">-</button>
+                    <span class="win-count">${wins[cont.id] || 0}</span>
+                    <button class="win-plus" data-id="${cont.id}">+</button>
                 </div>
-                <button class="edit-name-btn" data-id="${cont.id}"><i class="fas fa-save"></i> Save</button>
-                <button class="delete-contestant-btn" data-id="${cont.id}"><i class="fas fa-trash"></i> Delete</button>
             `;
-            container.appendChild(row);
+            container.appendChild(div);
         });
         
-        document.querySelectorAll(".adjust-wins-btn").forEach(btn => btn.addEventListener("click", (e) => {
+        document.querySelectorAll(".win-plus").forEach(btn => btn.addEventListener("click", (e) => {
             const id = btn.dataset.id;
-            const delta = parseInt(btn.dataset.delta);
-            const newWins = Math.max(0, (wins[id] || 0) + delta);
-            wins[id] = newWins;
+            wins[id] = (wins[id] || 0) + 1;
             saveWinsAndBroadcast();
         }));
-        
-        document.querySelectorAll(".edit-name-btn").forEach(btn => btn.addEventListener("click", (e) => {
+        document.querySelectorAll(".win-minus").forEach(btn => btn.addEventListener("click", (e) => {
             const id = btn.dataset.id;
-            const idx = contestants.findIndex(c => c.id === id);
-            if(idx !== -1) {
-                const nameInput = document.getElementById(`nameEdit_${id}`);
-                const urlInput = document.getElementById(`imgUrl_${id}`);
-                const emojiInput = document.getElementById(`emoji_${id}`);
-                if(nameInput.value.trim()) contestants[idx].name = nameInput.value.trim();
-                contestants[idx].imageUrl = urlInput.value;
-                contestants[idx].avatarEmoji = emojiInput.value || "😴";
-                saveContestantsAndBroadcast();
-            }
+            wins[id] = Math.max(0, (wins[id] || 0) - 1);
+            saveWinsAndBroadcast();
         }));
-        
-        document.querySelectorAll(".delete-contestant-btn").forEach(btn => btn.addEventListener("click", (e) => {
-            const id = btn.dataset.id;
-            const contestant = contestants.find(c => c.id === id);
-            if(confirm(`Delete "${contestant?.name}"?`)) {
-                if(timerIntervals[id]) clearInterval(timerIntervals[id]);
-                delete timerIntervals[id];
-                contestants = contestants.filter(c => c.id !== id);
-                votes = votes.filter(v => v.contestantId !== id);
-                delete wins[id];
-                saveContestantsAndBroadcast();
-                saveVotesAndBroadcast();
-                saveWinsAndBroadcast();
-            }
-        }));
-        
-        // Update finals dropdown
-        const select = document.getElementById("finalsWinnerSelect");
-        if(select) {
-            select.innerHTML = '<option value="">-- Pick Champion --</option>';
-            contestants.forEach(c => { select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`; });
-        }
     }
 
     function addVote(contestantId, voterName) {
@@ -813,9 +752,14 @@
     function updateRoundDisplay() {
         const elem = document.getElementById("roundNameDisplay");
         if(elem && ROUNDS[currentRound]) elem.innerText = ROUNDS[currentRound].name;
-        // Show/hide finals winner controls based on round
         const winnerControls = document.querySelector(".winner-controls");
         if(winnerControls) winnerControls.style.display = currentRound === "FINAL" ? "flex" : "none";
+        // Update finals dropdown
+        const select = document.getElementById("finalsWinnerSelect");
+        if(select && isAdminMode) {
+            select.innerHTML = '<option value="">-- Pick Champion --</option>';
+            contestants.forEach(c => { select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`; });
+        }
     }
 
     function crownFinalsWinner(winnerId) {
@@ -868,7 +812,8 @@
         document.getElementById("adminPanel").classList.remove("admin-hidden");
         renderContestants();
         renderVotesTable();
-        renderContestantManageList();
+        renderWinAdjustList();
+        updateRoundDisplay();
         bindAdminEvents();
         const saved = localStorage.getItem("sleep_auto_config");
         if(saved) { try { const cfg = JSON.parse(saved); startAutoInterval(cfg.hours); } catch(e) {} }
@@ -889,32 +834,9 @@
         document.getElementById("autoEvery3")?.addEventListener("click", () => { stopAuto(); startAutoInterval(72); });
         document.getElementById("autoWeekly")?.addEventListener("click", () => { stopAuto(); startAutoInterval(168); });
         document.getElementById("stopAuto")?.addEventListener("click", stopAuto);
-        document.getElementById("addContestantBtn")?.addEventListener("click", () => {
-            const nameInput = document.getElementById("newContestantName");
-            if(nameInput?.value.trim()) {
-                const newId = "c_" + Date.now() + "_" + Math.random();
-                contestants.push({ id: newId, name: nameInput.value.trim(), baseSeconds: 0, startTimestamp: Date.now(), imageUrl: "", avatarEmoji: "😪" });
-                wins[newId] = 0;
-                saveContestantsAndBroadcast();
-                saveWinsAndBroadcast();
-                nameInput.value = "";
-            } else alert("Enter name");
-        });
-        document.getElementById("resetAllBtn")?.addEventListener("click", () => {
-            if(confirm("RESET everything?")) {
-                stopAllTimers();
-                contestants = JSON.parse(JSON.stringify(DEFAULT_CONTESTANTS));
-                contestants.forEach(c => { c.startTimestamp = Date.now() - (c.baseSeconds * 1000); });
-                votes = []; wins = {};
-                contestants.forEach(c => wins[c.id] = 0);
-                currentRound = "R16"; currentRoundWinnerId = null;
-                saveContestantsAndBroadcast(); saveVotesAndBroadcast(); saveWinsAndBroadcast(); saveRoundAndBroadcast();
-            }
-        });
-        document.getElementById("clearVotesBtn")?.addEventListener("click", () => { if(confirm("Clear votes?")) { votes = []; saveVotesAndBroadcast(); } });
+        document.getElementById("clearVotesBtn")?.addEventListener("click", () => { if(confirm("Clear all votes?")) { votes = []; saveVotesAndBroadcast(); } });
     }
 
-    function stopAllTimers() { Object.values(timerIntervals).forEach(i => clearInterval(i)); timerIntervals = {}; }
     function showLeaderboard() {
         const sorted = [...contestants].sort((a,b) => (wins[b.id]||0) - (wins[a.id]||0));
         let html = '<div class="leaderboard-item"><strong>Contestant</strong><strong>🏆 Wins</strong></div>';
@@ -946,3 +868,6 @@
 </script>
 </body>
 </html>
+
+
+
