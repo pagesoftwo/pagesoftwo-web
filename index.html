@@ -247,7 +247,7 @@
             border: 2px solid #c084fc;
         }
         .admin-hidden { display: none; }
-        .round-control, .auto-options {
+        .round-control, .auto-options, .winner-controls {
             display: flex;
             gap: 0.8rem;
             align-items: center;
@@ -269,6 +269,15 @@
         .round-btn.active-round { background: #a855f7; box-shadow: 0 0 8px #d8b4fe; }
         .auto-btn {
             background: #7c3aed;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+        .winner-btn {
+            background: #f59e0b;
             border: none;
             padding: 8px 20px;
             border-radius: 40px;
@@ -350,7 +359,7 @@
         }
         i { margin-right: 6px; }
         button { cursor: pointer; }
-        .edit-img-btn, .edit-name-btn, .delete-contestant-btn {
+        .edit-img-btn, .edit-name-btn, .delete-contestant-btn, .adjust-wins-btn {
             background: #7c3aed;
             border: none;
             padding: 6px 12px;
@@ -362,6 +371,9 @@
         }
         .delete-contestant-btn:hover {
             background: #ef4444;
+        }
+        .adjust-wins-btn {
+            background: #059669;
         }
         .password-modal {
             max-width: 400px;
@@ -394,6 +406,29 @@
         }
         .reset-timer-btn {
             background: #7c3aed;
+        }
+        .refresh-notice {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #7c3aed;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .refresh-notice.show {
+            opacity: 1;
+        }
+        .select-winner-dropdown {
+            background: #2a1a42;
+            border: 1px solid #f59e0b;
+            border-radius: 40px;
+            padding: 8px 16px;
+            color: white;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -434,13 +469,19 @@
             <span id="autoStatus" style="margin-left:10px; font-size:0.8rem;">⏸️ Off</span>
         </div>
         
-        <div class="auto-options">
-            <button id="randomWinnerBtn" class="auto-btn" style="background:#db2777;"><i class="fas fa-dice-d6"></i> Randomly Pick Winner</button>
+        <!-- Finals Winner Selection -->
+        <div class="winner-controls">
+            <span><i class="fas fa-crown"></i> <strong>FINALS WINNER SELECTION</strong> (only when in FINAL round):</span>
+            <select id="finalsWinnerSelect" class="select-winner-dropdown">
+                <option value="">-- Pick Champion --</option>
+            </select>
+            <button id="crownChampionBtn" class="winner-btn"><i class="fas fa-crown"></i> Crown Champion & End Tournament</button>
+            <span style="font-size:0.7rem; color:#fbbf24;">Adds win to leaderboard, then resets to Round of 16</span>
         </div>
         
         <div style="background: #1f1233; border-radius: 1.5rem; padding: 1rem; margin: 1rem 0;">
             <h3><i class="fas fa-users"></i> Manage Contestants</h3>
-            <p style="font-size:0.75rem; margin-bottom:10px;">Edit names, change images, or delete contestants</p>
+            <p style="font-size:0.75rem; margin-bottom:10px;">Edit names, change images, add/remove wins, or delete contestants</p>
             <div id="contestantManageList"></div>
         </div>
         
@@ -477,13 +518,16 @@
     </div>
 </div>
 
+<div id="refreshNotice" class="refresh-notice">🔄 Data updated! Refreshing...</div>
+
 <script>
     const ADMIN_PASSWORD = "PagesADMIN2025";
-    const STORAGE_CONTESTANTS = "sleep_contestants_live";
-    const STORAGE_VOTES = "sleep_votes_live";
-    const STORAGE_ROUND = "sleep_round_live";
-    const STORAGE_WINS = "sleep_wins_live";
-    const STORAGE_START_TIMES = "sleep_start_times";
+    const STORAGE_CONTESTANTS = "sleep_contestants_final_v2";
+    const STORAGE_VOTES = "sleep_votes_final_v2";
+    const STORAGE_ROUND = "sleep_round_final_v2";
+    const STORAGE_WINS = "sleep_wins_final_v2";
+    const STORAGE_START_TIMES = "sleep_start_times_final_v2";
+    const STORAGE_LAST_UPDATE = "sleep_last_update_final_v2";
 
     let contestants = [];
     let votes = [];
@@ -502,21 +546,37 @@
     };
 
     const DEFAULT_CONTESTANTS = [
-        { id: "c1", name: "Dozing Derek", baseSeconds: 5063, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Derek", avatarEmoji: "😴" },
-        { id: "c2", name: "Snorin' Sarah", baseSeconds: 9287, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah", avatarEmoji: "💤" },
-        { id: "c3", name: "Nap Queen Nia", baseSeconds: 3625, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nia", avatarEmoji: "👑" },
-        { id: "c4", name: "Deep Dave", baseSeconds: 15234, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Dave", avatarEmoji: "🌊" },
-        { id: "c5", name: "Pillow Phantom", baseSeconds: 267, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Phantom", avatarEmoji: "👻" },
-        { id: "c6", name: "Slumber Samurai", baseSeconds: 8450, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Samurai", avatarEmoji: "⚔️" }
+        { id: "c1", name: "Pages", baseSeconds: 3600, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Pages", avatarEmoji: "📄" },
+        { id: "c2", name: "Pope Francis", baseSeconds: 4800, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Pope", avatarEmoji: "⛪" },
+        { id: "c3", name: "Barack Obama", baseSeconds: 7200, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Obama", avatarEmoji: "🇺🇸" },
+        { id: "c4", name: "Woodrow Wilson", baseSeconds: 5400, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Wilson", avatarEmoji: "📜" },
+        { id: "c5", name: "Horse", baseSeconds: 900, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Horse", avatarEmoji: "🐴" },
+        { id: "c6", name: "Cleopatra", baseSeconds: 6600, imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Cleopatra", avatarEmoji: "👑" }
     ];
+
+    function broadcastUpdate() {
+        localStorage.setItem(STORAGE_LAST_UPDATE, Date.now().toString());
+        const notice = document.getElementById("refreshNotice");
+        notice.classList.add("show");
+        setTimeout(() => { window.location.reload(); }, 800);
+    }
+
+    function checkForUpdates() {
+        const lastUpdate = localStorage.getItem(STORAGE_LAST_UPDATE);
+        const currentLoad = sessionStorage.getItem("page_loaded_at");
+        if (lastUpdate && (!currentLoad || parseInt(lastUpdate) > parseInt(currentLoad))) {
+            const notice = document.getElementById("refreshNotice");
+            notice.classList.add("show");
+            setTimeout(() => window.location.reload(), 500);
+        }
+    }
+
+    function markPageLoaded() { sessionStorage.setItem("page_loaded_at", Date.now().toString()); }
 
     function loadData() {
         const storedCont = localStorage.getItem(STORAGE_CONTESTANTS);
-        if(storedCont) {
-            contestants = JSON.parse(storedCont);
-        } else {
-            contestants = JSON.parse(JSON.stringify(DEFAULT_CONTESTANTS));
-        }
+        if(storedCont) contestants = JSON.parse(storedCont);
+        else contestants = JSON.parse(JSON.stringify(DEFAULT_CONTESTANTS));
         
         const storedVotes = localStorage.getItem(STORAGE_VOTES);
         votes = storedVotes ? JSON.parse(storedVotes) : [];
@@ -525,73 +585,49 @@
         if(storedRound && ROUNDS[storedRound]) currentRound = storedRound;
         
         const storedWins = localStorage.getItem(STORAGE_WINS);
-        if(storedWins) {
-            wins = JSON.parse(storedWins);
-        } else {
-            wins = {};
-            contestants.forEach(c => { wins[c.id] = 0; });
-        }
+        if(storedWins) wins = JSON.parse(storedWins);
+        else { wins = {}; contestants.forEach(c => { wins[c.id] = 0; }); }
         
         const storedStarts = localStorage.getItem(STORAGE_START_TIMES);
         if(storedStarts) {
             const startTimes = JSON.parse(storedStarts);
             contestants.forEach(c => {
-                if(startTimes[c.id]) {
-                    c.startTimestamp = startTimes[c.id];
-                } else {
-                    c.startTimestamp = Date.now() - (c.baseSeconds * 1000);
-                }
+                if(startTimes[c.id]) c.startTimestamp = startTimes[c.id];
+                else c.startTimestamp = Date.now() - (c.baseSeconds * 1000);
             });
         } else {
-            contestants.forEach(c => {
-                c.startTimestamp = Date.now() - (c.baseSeconds * 1000);
-            });
+            contestants.forEach(c => c.startTimestamp = Date.now() - (c.baseSeconds * 1000));
         }
-        
         contestants.forEach(c => { if(wins[c.id] === undefined) wins[c.id] = 0; });
     }
 
     function saveStartTimes() {
         const startTimes = {};
-        contestants.forEach(c => {
-            startTimes[c.id] = c.startTimestamp;
-        });
+        contestants.forEach(c => { startTimes[c.id] = c.startTimestamp; });
         localStorage.setItem(STORAGE_START_TIMES, JSON.stringify(startTimes));
     }
 
-    function saveContestants() { 
+    function saveContestantsAndBroadcast() { 
         localStorage.setItem(STORAGE_CONTESTANTS, JSON.stringify(contestants));
         saveStartTimes();
+        broadcastUpdate();
     }
-    function saveVotes() { localStorage.setItem(STORAGE_VOTES, JSON.stringify(votes)); }
-    function saveRound() { localStorage.setItem(STORAGE_ROUND, currentRound); }
-    function saveWins() { localStorage.setItem(STORAGE_WINS, JSON.stringify(wins)); }
+    function saveVotesAndBroadcast() { localStorage.setItem(STORAGE_VOTES, JSON.stringify(votes)); broadcastUpdate(); }
+    function saveRoundAndBroadcast() { localStorage.setItem(STORAGE_ROUND, currentRound); broadcastUpdate(); }
+    function saveWinsAndBroadcast() { localStorage.setItem(STORAGE_WINS, JSON.stringify(wins)); broadcastUpdate(); }
 
-    function getCurrentSeconds(contestant) {
-        const elapsedMs = Date.now() - contestant.startTimestamp;
-        return Math.floor(elapsedMs / 1000);
-    }
-
-    function updateContestantBaseSeconds(contestant) {
-        contestant.baseSeconds = getCurrentSeconds(contestant);
-    }
-
+    function getCurrentSeconds(contestant) { return Math.floor((Date.now() - contestant.startTimestamp) / 1000); }
+    function updateContestantBaseSeconds(contestant) { contestant.baseSeconds = getCurrentSeconds(contestant); }
     function formatTime(seconds) {
-        let h = Math.floor(seconds / 3600);
-        let m = Math.floor((seconds % 3600) / 60);
-        let s = seconds % 60;
+        let h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
         return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }
 
     function parseTimeToSeconds(input) {
         let str = input.trim().toLowerCase();
-        let hMatch = str.match(/(\d+)\s*h/);
-        let mMatch = str.match(/(\d+)\s*m/);
-        let sMatch = str.match(/(\d+)\s*s/);
+        let hMatch = str.match(/(\d+)\s*h/), mMatch = str.match(/(\d+)\s*m/), sMatch = str.match(/(\d+)\s*s/);
         if(hMatch || mMatch || sMatch) {
-            let hours = hMatch ? parseInt(hMatch[1]) : 0;
-            let mins = mMatch ? parseInt(mMatch[1]) : 0;
-            let secs = sMatch ? parseInt(sMatch[1]) : 0;
+            let hours = hMatch ? parseInt(hMatch[1]) : 0, mins = mMatch ? parseInt(mMatch[1]) : 0, secs = sMatch ? parseInt(sMatch[1]) : 0;
             return hours * 3600 + mins * 60 + secs;
         }
         if(str.includes(":")) {
@@ -604,65 +640,37 @@
         return isNaN(num) ? null : num;
     }
 
-    function escapeHtml(str) {
-        if(!str) return "";
-        return str.replace(/[&<>]/g, function(m) {
-            if(m === '&') return '&amp;';
-            if(m === '<') return '&lt;';
-            if(m === '>') return '&gt;';
-            return m;
-        });
-    }
+    function escapeHtml(str) { if(!str) return ""; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
 
     function getProfileImageHtml(contestant) {
-        if(contestant.imageUrl && contestant.imageUrl.trim() !== "") {
-            return `<img src="${escapeHtml(contestant.imageUrl)}" alt="${escapeHtml(contestant.name)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'width:75px;height:75px;background:linear-gradient(135deg,#7c3aed,#c084fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;\'>${contestant.avatarEmoji || '😴'}</div>';">`;
-        } else {
-            return `<div style="width:75px;height:75px;background:linear-gradient(135deg,#7c3aed,#c084fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;">${contestant.avatarEmoji || '😴'}</div>`;
+        if(contestant.imageUrl && contestant.imageUrl.trim()) {
+            return `<img src="${escapeHtml(contestant.imageUrl)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'width:75px;height:75px;background:linear-gradient(135deg,#7c3aed,#c084fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;\'>${contestant.avatarEmoji || '😴'}</div>';">`;
         }
+        return `<div style="width:75px;height:75px;background:linear-gradient(135deg,#7c3aed,#c084fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;">${contestant.avatarEmoji || '😴'}</div>`;
     }
 
-    function startTimerForContestant(contestantId) {
-        if(timerIntervals[contestantId]) clearInterval(timerIntervals[contestantId]);
-        timerIntervals[contestantId] = setInterval(() => {
-            const timeSpan = document.getElementById(`timeDisplay-${contestantId}`);
-            if(timeSpan) {
-                const cont = contestants.find(c => c.id === contestantId);
-                if(cont) {
-                    timeSpan.innerText = formatTime(getCurrentSeconds(cont));
-                }
-            }
+    function startTimerForContestant(id) {
+        if(timerIntervals[id]) clearInterval(timerIntervals[id]);
+        timerIntervals[id] = setInterval(() => {
+            const span = document.getElementById(`timeDisplay-${id}`);
+            if(span) { const cont = contestants.find(c => c.id === id); if(cont) span.innerText = formatTime(getCurrentSeconds(cont)); }
         }, 1000);
-    }
-
-    function stopAllTimers() {
-        Object.values(timerIntervals).forEach(interval => clearInterval(interval));
-        timerIntervals = {};
     }
 
     function renderContestants() {
         const grid = document.getElementById("contestantsGrid");
         if(!grid) return;
-        
-        if(contestants.length === 0) {
-            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px;">😴 No contestants yet. Admin can add them.</div>`;
-            return;
-        }
-        
+        if(contestants.length === 0) { grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px;">😴 No contestants yet.</div>`; return; }
         grid.innerHTML = "";
         contestants.forEach(cont => {
             const voteCount = votes.filter(v => v.contestantId === cont.id).length;
             const isWinner = (currentRoundWinnerId === cont.id);
             const winCount = wins[cont.id] || 0;
-            const currentSecs = getCurrentSeconds(cont);
-            
             const card = document.createElement("div");
             card.className = `contestant-card ${isWinner ? 'winner-glow' : ''}`;
             card.innerHTML = `
                 <div class="card-header">
-                    <div class="profile-img">
-                        ${getProfileImageHtml(cont)}
-                    </div>
+                    <div class="profile-img">${getProfileImageHtml(cont)}</div>
                     <div style="flex:1;">
                         <div class="contestant-name">${escapeHtml(cont.name)} ${isWinner ? '<i class="fas fa-crown winner-crown"></i>' : ''}</div>
                         <div class="wins-badge"><i class="fas fa-medal"></i> Tournament Wins: ${winCount}</div>
@@ -670,13 +678,13 @@
                 </div>
                 <div class="time-box">
                     <div><i class="fas fa-hourglass-half"></i> Sleep Duration (LIVE)</div>
-                    <div class="time-value" id="timeDisplay-${cont.id}">${formatTime(currentSecs)}</div>
+                    <div class="time-value" id="timeDisplay-${cont.id}">${formatTime(getCurrentSeconds(cont))}</div>
                 </div>
                 <div class="timer-controls" id="timerControls-${cont.id}">
-                    <button class="timer-btn reset-timer-btn" data-id="${cont.id}" data-action="reset"><i class="fas fa-clock"></i> Reset Timer</button>
+                    <button class="timer-btn reset-timer-btn" data-id="${cont.id}"><i class="fas fa-clock"></i> Reset Timer</button>
                 </div>
                 <div class="customize-row" id="customizeRow-${cont.id}">
-                    <input type="text" id="timeInput-${cont.id}" placeholder="Set specific time e.g., 1h 24m 23s" value="${formatTime(currentSecs)}">
+                    <input type="text" id="timeInput-${cont.id}" placeholder="Set specific time" value="${formatTime(getCurrentSeconds(cont))}">
                     <button class="set-time-btn" data-id="${cont.id}"><i class="fas fa-pen"></i> Set Time</button>
                 </div>
                 <div class="vote-section">
@@ -689,79 +697,38 @@
             startTimerForContestant(cont.id);
         });
         
-        // Apply visibility based on admin mode
-        document.querySelectorAll("[id^='customizeRow-']").forEach(row => {
-            if(isAdminMode) {
-                row.classList.remove("hidden-for-users");
-            } else {
-                row.classList.add("hidden-for-users");
+        document.querySelectorAll("[id^='customizeRow-']").forEach(row => isAdminMode ? row.classList.remove("hidden-for-users") : row.classList.add("hidden-for-users"));
+        document.querySelectorAll("[id^='timerControls-']").forEach(ctrl => isAdminMode ? ctrl.classList.remove("hidden-for-users") : ctrl.classList.add("hidden-for-users"));
+        
+        document.querySelectorAll(".reset-timer-btn").forEach(btn => btn.addEventListener("click", (e) => {
+            if(!isAdminMode) return;
+            const idx = contestants.findIndex(c => c.id === btn.dataset.id);
+            if(idx !== -1) { contestants[idx].startTimestamp = Date.now(); updateContestantBaseSeconds(contestants[idx]); saveContestantsAndBroadcast(); }
+        }));
+        
+        document.querySelectorAll(".set-time-btn").forEach(btn => btn.addEventListener("click", (e) => {
+            if(!isAdminMode) return;
+            const input = document.getElementById(`timeInput-${btn.dataset.id}`);
+            if(input) {
+                const target = parseTimeToSeconds(input.value);
+                if(target !== null && target >= 0) {
+                    const idx = contestants.findIndex(c => c.id === btn.dataset.id);
+                    if(idx !== -1) { contestants[idx].startTimestamp = Date.now() - (target * 1000); updateContestantBaseSeconds(contestants[idx]); saveContestantsAndBroadcast(); }
+                } else alert("Invalid format");
             }
-        });
+        }));
         
-        document.querySelectorAll("[id^='timerControls-']").forEach(controls => {
-            if(isAdminMode) {
-                controls.classList.remove("hidden-for-users");
-            } else {
-                controls.classList.add("hidden-for-users");
-            }
-        });
-        
-        document.querySelectorAll(".reset-timer-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                if(!isAdminMode) return;
-                const id = btn.getAttribute("data-id");
-                const idx = contestants.findIndex(c => c.id === id);
-                if(idx !== -1) {
-                    contestants[idx].startTimestamp = Date.now();
-                    updateContestantBaseSeconds(contestants[idx]);
-                    saveContestants();
-                    renderContestants();
-                }
-            });
-        });
-        
-        document.querySelectorAll(".set-time-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                if(!isAdminMode) return;
-                const id = btn.getAttribute("data-id");
-                const inputEl = document.getElementById(`timeInput-${id}`);
-                if(inputEl) {
-                    const targetSeconds = parseTimeToSeconds(inputEl.value);
-                    if(targetSeconds !== null && targetSeconds >= 0) {
-                        const idx = contestants.findIndex(c => c.id === id);
-                        if(idx !== -1) {
-                            contestants[idx].startTimestamp = Date.now() - (targetSeconds * 1000);
-                            updateContestantBaseSeconds(contestants[idx]);
-                            saveContestants();
-                            renderContestants();
-                        }
-                    } else {
-                        alert("Invalid format. Use like: 1h 24m 23s or 1:24:23");
-                    }
-                }
-            });
-        });
-        
-        document.querySelectorAll(".vote-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                const id = btn.getAttribute("data-id");
-                const nameInput = document.getElementById(`voteName-${id}`);
-                if(nameInput && nameInput.value.trim() !== "") {
-                    addVote(id, nameInput.value.trim());
-                    nameInput.value = "";
-                } else {
-                    alert("Please enter your name to vote!");
-                }
-            });
-        });
-        
+        document.querySelectorAll(".vote-btn").forEach(btn => btn.addEventListener("click", (e) => {
+            const nameInput = document.getElementById(`voteName-${btn.dataset.id}`);
+            if(nameInput?.value.trim()) { addVote(btn.dataset.id, nameInput.value.trim()); nameInput.value = ""; }
+            else alert("Enter your name");
+        }));
         updateRoundDisplay();
     }
 
     function renderContestantManageList() {
         const container = document.getElementById("contestantManageList");
         if(!container) return;
-        
         container.innerHTML = "";
         contestants.forEach(cont => {
             const row = document.createElement("div");
@@ -769,131 +736,132 @@
             row.innerHTML = `
                 <img class="image-preview" src="${escapeHtml(cont.imageUrl || '')}" onerror="this.src=''; this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div style="display:${cont.imageUrl ? 'none' : 'flex'}; width:50px;height:50px;background:#7c3aed;border-radius:50%;align-items:center;justify-content:center;font-size:1.5rem;">${cont.avatarEmoji || '😴'}</div>
-                <input type="text" class="name-edit-input" id="nameEdit_${cont.id}" value="${escapeHtml(cont.name)}" placeholder="Name">
+                <input type="text" class="name-edit-input" id="nameEdit_${cont.id}" value="${escapeHtml(cont.name)}">
                 <input type="text" class="image-url-input" id="imgUrl_${cont.id}" placeholder="Image URL" value="${escapeHtml(cont.imageUrl || '')}">
-                <input type="text" id="emoji_${cont.id}" placeholder="Emoji" style="width:60px;background:#1f0f33;border-radius:40px;padding:6px;text-align:center;" value="${cont.avatarEmoji || '😴'}">
+                <input type="text" id="emoji_${cont.id}" placeholder="Emoji" style="width:60px;text-align:center;" value="${cont.avatarEmoji || '😴'}">
+                <div style="display:flex; gap:5px;">
+                    <button class="adjust-wins-btn" data-id="${cont.id}" data-delta="-1"><i class="fas fa-minus"></i></button>
+                    <span style="min-width:40px; text-align:center;">🏆 ${wins[cont.id] || 0}</span>
+                    <button class="adjust-wins-btn" data-id="${cont.id}" data-delta="1"><i class="fas fa-plus"></i></button>
+                </div>
                 <button class="edit-name-btn" data-id="${cont.id}"><i class="fas fa-save"></i> Save</button>
                 <button class="delete-contestant-btn" data-id="${cont.id}"><i class="fas fa-trash"></i> Delete</button>
             `;
             container.appendChild(row);
         });
         
-        document.querySelectorAll(".edit-name-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                const id = btn.getAttribute("data-id");
+        document.querySelectorAll(".adjust-wins-btn").forEach(btn => btn.addEventListener("click", (e) => {
+            const id = btn.dataset.id;
+            const delta = parseInt(btn.dataset.delta);
+            const newWins = Math.max(0, (wins[id] || 0) + delta);
+            wins[id] = newWins;
+            saveWinsAndBroadcast();
+        }));
+        
+        document.querySelectorAll(".edit-name-btn").forEach(btn => btn.addEventListener("click", (e) => {
+            const id = btn.dataset.id;
+            const idx = contestants.findIndex(c => c.id === id);
+            if(idx !== -1) {
                 const nameInput = document.getElementById(`nameEdit_${id}`);
                 const urlInput = document.getElementById(`imgUrl_${id}`);
                 const emojiInput = document.getElementById(`emoji_${id}`);
-                const idx = contestants.findIndex(c => c.id === id);
-                if(idx !== -1) {
-                    if(nameInput.value.trim()) contestants[idx].name = nameInput.value.trim();
-                    contestants[idx].imageUrl = urlInput.value;
-                    contestants[idx].avatarEmoji = emojiInput.value || "😴";
-                    saveContestants();
-                    renderContestants();
-                    renderContestantManageList();
-                    renderVotesTable();
-                }
-            });
-        });
+                if(nameInput.value.trim()) contestants[idx].name = nameInput.value.trim();
+                contestants[idx].imageUrl = urlInput.value;
+                contestants[idx].avatarEmoji = emojiInput.value || "😴";
+                saveContestantsAndBroadcast();
+            }
+        }));
         
-        document.querySelectorAll(".delete-contestant-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                const id = btn.getAttribute("data-id");
-                const contestant = contestants.find(c => c.id === id);
-                if(confirm(`Delete "${contestant?.name}"?`)) {
-                    if(timerIntervals[id]) clearInterval(timerIntervals[id]);
-                    delete timerIntervals[id];
-                    contestants = contestants.filter(c => c.id !== id);
-                    votes = votes.filter(v => v.contestantId !== id);
-                    delete wins[id];
-                    saveContestants();
-                    saveVotes();
-                    saveWins();
-                    renderContestants();
-                    renderContestantManageList();
-                    renderVotesTable();
-                }
-            });
-        });
+        document.querySelectorAll(".delete-contestant-btn").forEach(btn => btn.addEventListener("click", (e) => {
+            const id = btn.dataset.id;
+            const contestant = contestants.find(c => c.id === id);
+            if(confirm(`Delete "${contestant?.name}"?`)) {
+                if(timerIntervals[id]) clearInterval(timerIntervals[id]);
+                delete timerIntervals[id];
+                contestants = contestants.filter(c => c.id !== id);
+                votes = votes.filter(v => v.contestantId !== id);
+                delete wins[id];
+                saveContestantsAndBroadcast();
+                saveVotesAndBroadcast();
+                saveWinsAndBroadcast();
+            }
+        }));
+        
+        // Update finals dropdown
+        const select = document.getElementById("finalsWinnerSelect");
+        if(select) {
+            select.innerHTML = '<option value="">-- Pick Champion --</option>';
+            contestants.forEach(c => { select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`; });
+        }
     }
 
     function addVote(contestantId, voterName) {
-        const newVote = {
-            id: Date.now() + Math.random(),
-            voterName: voterName.substring(0, 50),
-            contestantId: contestantId,
-            timestamp: new Date().toLocaleString()
-        };
-        votes.push(newVote);
-        saveVotes();
-        renderVotesTable();
-        renderContestants();
+        votes.push({ id: Date.now() + Math.random(), voterName: voterName.substring(0,50), contestantId, timestamp: new Date().toLocaleString() });
+        saveVotesAndBroadcast();
     }
 
     function renderVotesTable() {
         const tbody = document.getElementById("votesTableBody");
         if(!tbody) return;
-        if(votes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No votes yet</td></tr>';
-            return;
-        }
+        if(votes.length === 0) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No votes yet</td></tr>'; return; }
         const contestantMap = {};
         contestants.forEach(c => { contestantMap[c.id] = c.name; });
         tbody.innerHTML = "";
-        votes.slice().reverse().forEach(vote => {
-            tbody.innerHTML += `<tr><td>${escapeHtml(vote.voterName)}</td><td>${escapeHtml(contestantMap[vote.contestantId] || '?')}</td><td>${escapeHtml(vote.timestamp)}</td></tr>`;
-        });
+        votes.slice().reverse().forEach(v => { tbody.innerHTML += `<tr><td>${escapeHtml(v.voterName)}</td><td>${escapeHtml(contestantMap[v.contestantId] || '?')}</td><td>${escapeHtml(v.timestamp)}</td></tr>`; });
     }
 
     function updateRoundDisplay() {
-        const roundElem = document.getElementById("roundNameDisplay");
-        if(roundElem && ROUNDS[currentRound]) roundElem.innerText = ROUNDS[currentRound].name;
+        const elem = document.getElementById("roundNameDisplay");
+        if(elem && ROUNDS[currentRound]) elem.innerText = ROUNDS[currentRound].name;
+        // Show/hide finals winner controls based on round
+        const winnerControls = document.querySelector(".winner-controls");
+        if(winnerControls) winnerControls.style.display = currentRound === "FINAL" ? "flex" : "none";
     }
 
-    function declareWinnerAndAdvance(winnerId) {
-        if(winnerId && contestants.find(c => c.id === winnerId)) {
+    function crownFinalsWinner(winnerId) {
+        if(!winnerId) { alert("Please select a champion from the dropdown"); return; }
+        const winner = contestants.find(c => c.id === winnerId);
+        if(winner && currentRound === "FINAL") {
             wins[winnerId] = (wins[winnerId] || 0) + 1;
-            saveWins();
+            saveWinsAndBroadcast();
             currentRoundWinnerId = winnerId;
             renderContestants();
-            setTimeout(() => { currentRoundWinnerId = null; renderContestants(); }, 3000);
-        }
-        let nextRound = ROUNDS[currentRound]?.next;
-        if(nextRound && ROUNDS[nextRound]) {
-            currentRound = nextRound;
-            saveRound();
-            updateRoundDisplay();
-            renderContestants();
-        } else if(currentRound === "FINAL") {
-            alert(`🏆 TOURNAMENT COMPLETE! Champion crowned! Starting new tournament.`);
-            currentRound = "R16";
-            saveRound();
-            updateRoundDisplay();
-            renderContestants();
-        }
+            alert(`🏆👑 CHAMPION CROWNED! ${winner.name} wins the tournament! +1 win added. Tournament resets to Round of 16.`);
+            setTimeout(() => {
+                currentRound = "R16";
+                saveRoundAndBroadcast();
+                currentRoundWinnerId = null;
+            }, 1500);
+        } else alert("Can only crown winner during FINAL round");
     }
 
     function selectRandomWinnerAndAdvance() {
         if(contestants.length === 0) return;
         const randomIdx = Math.floor(Math.random() * contestants.length);
         const winner = contestants[randomIdx];
-        alert(`🎲 Round winner: ${winner.name} advances! Win recorded.`);
-        declareWinnerAndAdvance(winner.id);
+        alert(`🎲 Random winner: ${winner.name} advances!`);
+        if(currentRound === "FINAL") {
+            wins[winner.id] = (wins[winner.id] || 0) + 1;
+            saveWinsAndBroadcast();
+            currentRoundWinnerId = winner.id;
+            renderContestants();
+            alert(`🏆 TOURNAMENT COMPLETE! ${winner.name} is champion! Resetting to Round of 16.`);
+            setTimeout(() => { currentRound = "R16"; saveRoundAndBroadcast(); currentRoundWinnerId = null; }, 1500);
+        } else {
+            let nextRound = ROUNDS[currentRound]?.next;
+            if(nextRound) { currentRound = nextRound; saveRoundAndBroadcast(); }
+            else { wins[winner.id] = (wins[winner.id] || 0) + 1; saveWinsAndBroadcast(); currentRound = "R16"; saveRoundAndBroadcast(); }
+        }
     }
 
     function startAutoInterval(hours) {
         if(autoIntervalId) clearInterval(autoIntervalId);
-        autoIntervalId = setInterval(() => selectRandomWinnerAndAdvance(), hours * 60 * 60 * 1000);
+        autoIntervalId = setInterval(() => selectRandomWinnerAndAdvance(), hours * 3600000);
         document.getElementById("autoStatus").innerText = `⏰ Auto every ${hours}h`;
-        localStorage.setItem("sleep_auto_config", JSON.stringify({ hours, startTime: Date.now() }));
+        localStorage.setItem("sleep_auto_config", JSON.stringify({ hours }));
     }
 
-    function stopAuto() {
-        if(autoIntervalId) { clearInterval(autoIntervalId); autoIntervalId = null; }
-        document.getElementById("autoStatus").innerText = "⏸️ Off";
-        localStorage.removeItem("sleep_auto_config");
-    }
+    function stopAuto() { if(autoIntervalId) { clearInterval(autoIntervalId); autoIntervalId = null; } document.getElementById("autoStatus").innerText = "⏸️ Off"; localStorage.removeItem("sleep_auto_config"); }
 
     function enableAdminMode() {
         isAdminMode = true;
@@ -902,27 +870,20 @@
         renderVotesTable();
         renderContestantManageList();
         bindAdminEvents();
-        const savedAuto = localStorage.getItem("sleep_auto_config");
-        if(savedAuto) {
-            try { const cfg = JSON.parse(savedAuto); startAutoInterval(cfg.hours); } catch(e) {}
-        }
+        const saved = localStorage.getItem("sleep_auto_config");
+        if(saved) { try { const cfg = JSON.parse(saved); startAutoInterval(cfg.hours); } catch(e) {} }
     }
-    
-    function disableAdminMode() {
-        isAdminMode = false;
-        document.getElementById("adminPanel").classList.add("admin-hidden");
-        renderContestants();
-        if(autoIntervalId) { clearInterval(autoIntervalId); autoIntervalId = null; }
-    }
+    function disableAdminMode() { isAdminMode = false; document.getElementById("adminPanel").classList.add("admin-hidden"); renderContestants(); if(autoIntervalId) { clearInterval(autoIntervalId); autoIntervalId = null; } }
 
     let adminEventsBound = false;
     function bindAdminEvents() {
         if(adminEventsBound) return;
         adminEventsBound = true;
-        document.getElementById("roundLast16")?.addEventListener("click", () => { currentRound = "R16"; saveRound(); updateRoundDisplay(); renderContestants(); });
-        document.getElementById("roundQF")?.addEventListener("click", () => { currentRound = "QF"; saveRound(); updateRoundDisplay(); renderContestants(); });
-        document.getElementById("roundSF")?.addEventListener("click", () => { currentRound = "SF"; saveRound(); updateRoundDisplay(); renderContestants(); });
-        document.getElementById("roundFinal")?.addEventListener("click", () => { currentRound = "FINAL"; saveRound(); updateRoundDisplay(); renderContestants(); });
+        document.getElementById("roundLast16")?.addEventListener("click", () => { currentRound = "R16"; saveRoundAndBroadcast(); });
+        document.getElementById("roundQF")?.addEventListener("click", () => { currentRound = "QF"; saveRoundAndBroadcast(); });
+        document.getElementById("roundSF")?.addEventListener("click", () => { currentRound = "SF"; saveRoundAndBroadcast(); });
+        document.getElementById("roundFinal")?.addEventListener("click", () => { currentRound = "FINAL"; saveRoundAndBroadcast(); });
+        document.getElementById("crownChampionBtn")?.addEventListener("click", () => { const select = document.getElementById("finalsWinnerSelect"); crownFinalsWinner(select?.value); });
         document.getElementById("randomWinnerBtn")?.addEventListener("click", selectRandomWinnerAndAdvance);
         document.getElementById("autoDaily")?.addEventListener("click", () => { stopAuto(); startAutoInterval(24); });
         document.getElementById("autoEvery3")?.addEventListener("click", () => { stopAuto(); startAutoInterval(72); });
@@ -931,13 +892,13 @@
         document.getElementById("addContestantBtn")?.addEventListener("click", () => {
             const nameInput = document.getElementById("newContestantName");
             if(nameInput?.value.trim()) {
-                const newId = "c_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+                const newId = "c_" + Date.now() + "_" + Math.random();
                 contestants.push({ id: newId, name: nameInput.value.trim(), baseSeconds: 0, startTimestamp: Date.now(), imageUrl: "", avatarEmoji: "😪" });
                 wins[newId] = 0;
-                saveContestants(); saveWins();
-                renderContestants(); renderVotesTable(); renderContestantManageList();
+                saveContestantsAndBroadcast();
+                saveWinsAndBroadcast();
                 nameInput.value = "";
-            } else alert("Enter a contestant name");
+            } else alert("Enter name");
         });
         document.getElementById("resetAllBtn")?.addEventListener("click", () => {
             if(confirm("RESET everything?")) {
@@ -947,43 +908,31 @@
                 votes = []; wins = {};
                 contestants.forEach(c => wins[c.id] = 0);
                 currentRound = "R16"; currentRoundWinnerId = null;
-                saveContestants(); saveVotes(); saveWins(); saveRound();
-                renderContestants(); renderVotesTable(); renderContestantManageList(); updateRoundDisplay();
+                saveContestantsAndBroadcast(); saveVotesAndBroadcast(); saveWinsAndBroadcast(); saveRoundAndBroadcast();
             }
         });
-        document.getElementById("clearVotesBtn")?.addEventListener("click", () => {
-            if(confirm("Clear all votes?")) { votes = []; saveVotes(); renderVotesTable(); renderContestants(); }
-        });
+        document.getElementById("clearVotesBtn")?.addEventListener("click", () => { if(confirm("Clear votes?")) { votes = []; saveVotesAndBroadcast(); } });
     }
 
+    function stopAllTimers() { Object.values(timerIntervals).forEach(i => clearInterval(i)); timerIntervals = {}; }
     function showLeaderboard() {
         const sorted = [...contestants].sort((a,b) => (wins[b.id]||0) - (wins[a.id]||0));
         let html = '<div class="leaderboard-item"><strong>Contestant</strong><strong>🏆 Wins</strong></div>';
-        sorted.forEach(c => { html += `<div class="leaderboard-item"><span><i class="fas fa-user"></i> ${escapeHtml(c.name)}</span><span>${wins[c.id] || 0}</span></div>`; });
+        sorted.forEach(c => { html += `<div class="leaderboard-item"><span>${escapeHtml(c.name)}</span><span>${wins[c.id] || 0}</span></div>`; });
         document.getElementById("leaderboardList").innerHTML = html;
         document.getElementById("leaderboardModal").style.display = "flex";
     }
-    
-    function showPasswordModal() {
-        document.getElementById("passwordModal").style.display = "flex";
-        document.getElementById("adminPasswordInput").focus();
-        document.getElementById("passwordError").innerText = "";
-    }
-    
-    function checkPassword() {
-        if(document.getElementById("adminPasswordInput").value === ADMIN_PASSWORD) {
-            document.getElementById("passwordModal").style.display = "none";
-            enableAdminMode();
-        } else {
-            document.getElementById("passwordError").innerText = "Incorrect password. Access denied.";
-        }
-    }
+    function showPasswordModal() { document.getElementById("passwordModal").style.display = "flex"; document.getElementById("adminPasswordInput").focus(); document.getElementById("passwordError").innerText = ""; }
+    function checkPassword() { if(document.getElementById("adminPasswordInput").value === ADMIN_PASSWORD) { document.getElementById("passwordModal").style.display = "none"; enableAdminMode(); } else document.getElementById("passwordError").innerText = "Incorrect password."; }
 
     function init() {
+        markPageLoaded();
         loadData();
         renderContestants();
         renderVotesTable();
         updateRoundDisplay();
+        checkForUpdates();
+        window.addEventListener("storage", (e) => { if(e.key === STORAGE_LAST_UPDATE) checkForUpdates(); });
         document.getElementById("showLeaderboardBtn")?.addEventListener("click", showLeaderboard);
         document.getElementById("adminLoginBtn")?.addEventListener("click", showPasswordModal);
         document.getElementById("adminLogoutBtn")?.addEventListener("click", disableAdminMode);
@@ -991,10 +940,7 @@
         document.getElementById("submitPasswordBtn")?.addEventListener("click", checkPassword);
         document.getElementById("adminPasswordInput")?.addEventListener("keypress", (e) => { if(e.key === "Enter") checkPassword(); });
         document.getElementById("closeModal")?.addEventListener("click", () => document.getElementById("leaderboardModal").style.display = "none");
-        window.addEventListener("click", (e) => {
-            if(e.target === document.getElementById("leaderboardModal")) document.getElementById("leaderboardModal").style.display = "none";
-            if(e.target === document.getElementById("passwordModal")) document.getElementById("passwordModal").style.display = "none";
-        });
+        window.addEventListener("click", (e) => { if(e.target === document.getElementById("leaderboardModal")) document.getElementById("leaderboardModal").style.display = "none"; if(e.target === document.getElementById("passwordModal")) document.getElementById("passwordModal").style.display = "none"; });
     }
     init();
 </script>
