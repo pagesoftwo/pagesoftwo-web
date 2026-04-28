@@ -3,9 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Pages Network | Minecraft Server</title>
+    <title>Enderfall Network | Minecraft Server Status</title>
+    <meta name="description" content="Enderfall Minecraft Server - Check online players and start the server">
+    <meta name="author" content="Enderfall Network">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Enderfall Network Minecraft Server">
+    <meta property="og:description" content="Modern Minecraft server with purple theme">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon (optional - create your own) -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛏️</text></svg>">
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
     <style>
         * {
             margin: 0;
@@ -251,7 +263,7 @@
     <div class="server-card">
         <div class="header">
             <div class="logo">
-                <h1><i class="fas fa-crown"></i> Pages Network</h1>
+                <h1><i class="fas fa-crown"></i> Enderfall Network</h1>
                 <p>Premium Minecraft Experience</p>
             </div>
             <div class="status-badge">
@@ -293,78 +305,41 @@
 
     <script>
         // ============================================
-        // CONFIGURATION - REPLACE WITH YOUR DETAILS
+        // CONFIGURATION - YOUR ORACLE VM DETAILS
         // ============================================
         const ORACLE_VM_IP = '150.136.72.150';
         const API_SECRET = 'sk_live_Z1dguPd8TGeRkr3DfWDbiIPT769zeYn3';
         const API_BASE = `http://${ORACLE_VM_IP}:5000`;
         
-        // Your actual Minecraft server IP (for status queries)
-        // Replace with your main Minecraft server's IP or domain
-        const MINECRAFT_SERVER_IP = '150.136.72.150'; // Update this to your actual MC server IP if different
-        
         let refreshInterval;
         let isMemberAuthenticated = false;
         
-        // Fetch server status using the Oracle Manager's status endpoint
+        // Fetch server status
         async function fetchServerStatus() {
             try {
-                // First check if our manager is alive
-                const healthResponse = await fetch(`${API_BASE}/status`);
-                if (!healthResponse.ok) {
+                const response = await fetch(`${API_BASE}/status`);
+                if (!response.ok) {
                     throw new Error('Manager not responding');
                 }
                 
-                // Get server instance status from Oracle
-                // Note: This requires a new endpoint in your manager to check server state
-                // For now, we'll simulate by trying to ping the Minecraft server
-                const mcStatus = await checkMinecraftServer();
+                const data = await response.json();
+                console.log('Status response:', data);
+                
+                // For demo, show server as online if manager is responding
                 updateUI({
-                    serverOnline: mcStatus.online,
-                    players: mcStatus.players
+                    serverOnline: true,
+                    players: {
+                        online: Math.floor(Math.random() * 8),
+                        list: ['AetherCrafter', 'PixelWarden', 'LunaVoid', 'ElytraBlaze'].slice(0, Math.floor(Math.random() * 4) + 1)
+                    }
                 });
                 
             } catch (error) {
                 console.error('Failed to fetch server status:', error);
                 document.getElementById('playerList').innerHTML = 
                     '<div style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Cannot connect to Oracle Cloud manager</div>';
-                document.getElementById('alertMessage').innerHTML = '⚠️ Backend connection issue. Is the Oracle VM running?';
+                document.getElementById('alertMessage').innerHTML = '⚠️ Backend connection issue. Is the Oracle VM running?<br><small>Make sure port 5000 is open in Oracle Cloud Console</small>';
             }
-        }
-        
-        // Check Minecraft server directly via status query
-        async function checkMinecraftServer() {
-            // Since we can't directly query Minecraft servers from browser due to CORS/port restrictions
-            // We'll use a public API or your manager to get status
-            // For demo, we'll simulate realistic-looking data
-            
-            // You can replace this with your manager's status endpoint that queries the MC server
-            // For now, shows demo data that changes periodically
-            const demoOnline = Math.random() > 0.3; // 70% chance online
-            const demoPlayerCount = demoOnline ? Math.floor(Math.random() * 8) : 0;
-            const demoPlayers = ['AetherCrafter', 'PixelWarden', 'LunaVoid', 'ElytraBlaze', 'NetherBane'].slice(0, demoPlayerCount);
-            
-            return {
-                online: demoOnline,
-                players: {
-                    online: demoPlayerCount,
-                    max: 20,
-                    list: demoPlayers
-                }
-            };
-            
-            // REAL IMPLEMENTATION: Add an endpoint to your manager that queries the Minecraft server
-            // Then uncomment this:
-            /*
-            try {
-                const response = await fetch(`${API_BASE}/mc-status`);
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('MC status check failed:', error);
-                return { online: false, players: { online: 0, list: [] } };
-            }
-            */
         }
         
         // Update UI with server data
@@ -373,10 +348,8 @@
             const playerList = data.players?.list || [];
             const serverOnline = data.serverOnline;
             
-            // Update count
             document.getElementById('playerCount').textContent = playerCount;
             
-            // Update player list
             const playerListDiv = document.getElementById('playerList');
             if (playerList.length > 0) {
                 playerListDiv.innerHTML = playerList.map(name => `
@@ -391,7 +364,6 @@
                 playerListDiv.innerHTML = '<div style="color: #f59e0b;"><i class="fas fa-power-off"></i> Server is offline. Click the button above to start!</div>';
             }
             
-            // Update status indicator
             const led = document.getElementById('ledIndicator');
             const statusText = document.getElementById('serverStatusText');
             
@@ -410,8 +382,7 @@
             
             const memberKey = prompt('🔐 MEMBERS ONLY\n\nEnter your special membership key to start the server:', '');
             
-            // In production, verify with backend or use stored keys
-            const validKeys = ['pag22'];
+            const validKeys = ['enderfall2026', 'purplecrown', 'member123', 'admin', 'enderfall'];
             
             if (validKeys.includes(memberKey?.toLowerCase())) {
                 isMemberAuthenticated = true;
@@ -425,7 +396,7 @@
             return false;
         }
         
-        // Trigger server start via Oracle Cloud manager
+        // Trigger server start
         async function triggerServerStart() {
             const startBtn = document.getElementById('memberStartBtn');
             const originalText = startBtn.innerHTML;
@@ -448,15 +419,12 @@
                 
                 if (response.ok && data.status) {
                     showAlert('✅ Server start command sent to Oracle Cloud! The server will boot up shortly (1-2 minutes).', 'success');
-                    
-                    // Start polling for server status
-                    startPollingForServer();
                 } else {
                     showAlert('❌ Failed to start server: ' + (data.error || 'Unknown error'), 'error');
                 }
             } catch (error) {
                 console.error('Start server error:', error);
-                showAlert('❌ Cannot reach Oracle Cloud manager. Make sure the Oracle VM is running and port 5000 is open.', 'error');
+                showAlert('❌ Cannot reach Oracle Cloud manager. Make sure the Oracle VM is running and port 5000 is open in firewall.', 'error');
             } finally {
                 setTimeout(() => {
                     startBtn.disabled = false;
@@ -465,30 +433,6 @@
             }
         }
         
-        // Poll for server to come online
-        let pollingInterval;
-        function startPollingForServer() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            
-            let attempts = 0;
-            showAlert('🔄 Server starting... This takes 1-2 minutes. Polling for status...', 'info');
-            
-            pollingInterval = setInterval(async () => {
-                attempts++;
-                const status = await checkMinecraftServer();
-                
-                if (status.online) {
-                    clearInterval(pollingInterval);
-                    showAlert('✅ Server is now ONLINE! Players can join now!', 'success');
-                    fetchServerStatus(); // Refresh UI
-                } else if (attempts >= 24) { // 2 minutes (24 * 5 sec)
-                    clearInterval(pollingInterval);
-                    showAlert('⏰ Server taking longer than expected. Check Oracle Cloud Console for status.', 'warning');
-                }
-            }, 5000); // Check every 5 seconds
-        }
-        
-        // Show alert message
         function showAlert(message, type = 'info') {
             const alertPanel = document.getElementById('alertPanel');
             const alertMessage = document.getElementById('alertMessage');
@@ -503,24 +447,20 @@
             
             alertPanel.style.borderLeftColor = colors[type] || '#a855f7';
             
-            // Auto-reset after 8 seconds for non-critical messages
-            if (type !== 'error') {
-                setTimeout(() => {
-                    if (alertMessage.innerHTML === message) {
-                        alertPanel.style.borderLeftColor = '#a855f7';
-                    }
-                }, 8000);
-            }
+            setTimeout(() => {
+                if (alertMessage.innerHTML === message) {
+                    alertPanel.style.borderLeftColor = '#a855f7';
+                }
+            }, 8000);
         }
         
-        // Escape HTML to prevent XSS
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         }
         
-        // Member button handler
+        // Event listeners
         document.getElementById('memberStartBtn').addEventListener('click', async () => {
             const authenticated = await authenticateMember();
             if (authenticated) {
@@ -528,7 +468,6 @@
             }
         });
         
-        // Check saved authentication
         if (localStorage.getItem('member_authenticated') === 'true') {
             isMemberAuthenticated = true;
             showAlert('Welcome back, Member! Click the button to start the server.', 'success');
@@ -538,27 +477,9 @@
         fetchServerStatus();
         refreshInterval = setInterval(fetchServerStatus, 15000);
         
-        // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             if (refreshInterval) clearInterval(refreshInterval);
-            if (pollingInterval) clearInterval(pollingInterval);
         });
-        
-        // Test connection to Oracle manager on load
-        async function testConnection() {
-            try {
-                const response = await fetch(`${API_BASE}/status`);
-                if (response.ok) {
-                    console.log('✅ Connected to Oracle Cloud manager');
-                } else {
-                    console.warn('⚠️ Oracle manager returned error');
-                }
-            } catch (error) {
-                console.error('❌ Cannot reach Oracle manager. Make sure the VM is running.');
-                showAlert('⚠️ Cannot reach Oracle Cloud backend. Is your VM running?', 'warning');
-            }
-        }
-        testConnection();
     </script>
 </body>
 </html>
