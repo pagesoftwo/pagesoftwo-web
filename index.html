@@ -419,13 +419,12 @@
   // If you want it hidden, modify proxy to hardcode server ID and omit it from frontend calls.
   // For now, we'll ask user to set it here; or you can remove this line and put the ID directly in proxy.
   // I'll add a constant.
-  const SERVER_ID = "648d680a";  // Replace with your actual server ID (or leave as "PROXY_STORES_IT" and modify proxy)
+  const SERVER_ID = "648d680a-d340-4eab-8f12-344c30f06026";  // Replace with your actual server ID (or leave as "PROXY_STORES_IT" and modify proxy)
   // Better: set SERVER_ID in proxy and don't require frontend to know it. Let's do that.
   // I'll adjust the HTML to not require SERVER_ID - assume proxy injects it.
   // Actually, the proxy.ts already injects the server ID from env into the URL? No, the proxy forwards whatever endpoint we send.
   // If we want the frontend to not know the server ID, we'd need to rewrite endpoints in proxy to always use the known ID.
   // Simpler: keep it visible. Server IDs are not sensitive (they are like usernames). The API key is the secret.
-  alert("Edit the constant SERVER_ID inside the script tag to match your actual server ID.");
 </script>
 </body>
 </html>
