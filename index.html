@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Pagesoftwo · Server Control</title>
+  <title>Pagesoftwo Srv</title>
   <style>
-    /* (same CSS as before, no changes needed) */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: linear-gradient(145deg, #1a0b2e 0%, #0f0719 100%); font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 2rem; }
-    .dashboard { max-width: 700px; width: 100%; background: rgba(46, 21, 82, 0.55); backdrop-filter: blur(14px); border-radius: 3rem; border: 1px solid rgba(175, 112, 245, 0.4); box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5); padding: 2rem 1.8rem; }
+    .dashboard { max-width: 750px; width: 100%; background: rgba(46, 21, 82, 0.55); backdrop-filter: blur(14px); border-radius: 3rem; border: 1px solid rgba(175, 112, 245, 0.4); box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5); padding: 2rem 1.8rem; }
     h1 { font-size: 2rem; background: linear-gradient(135deg, #e0b0ff, #b77eff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.6rem; }
     h1::before { content: "⚡"; font-size: 2rem; color: #c77dff; }
     .sub { color: #ba9bdd; margin-bottom: 2rem; border-left: 3px solid #b77eff; padding-left: 0.9rem; font-size: 0.9rem; }
@@ -22,7 +21,7 @@
     .status-text { font-weight: 600; color: #f1e6ff; }
     .refresh-btn { background: #2f2046; border: none; color: #cba6ff; padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; transition: 0.2s; }
     .refresh-btn:hover { background: #4a2f73; color: white; }
-    .button-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0 1.8rem; }
+    .button-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0 1.5rem; }
     .btn { flex: 1; min-width: 120px; background: #2a1b42; border: none; padding: 0.9rem 0.5rem; border-radius: 2.2rem; font-weight: 600; color: #eddaff; cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
     .btn-primary { background: linear-gradient(105deg, #8849e0, #b05eff); color: white; }
     .btn-primary:hover { transform: translateY(-2px); background: linear-gradient(105deg, #9a5bef, #c777ff); box-shadow: 0 10px 20px -6px #995eff80; }
@@ -32,21 +31,22 @@
     .btn-special:hover { transform: translateY(-2px); box-shadow: 0 0 12px #cc88ff; }
     .btn-queue { background: linear-gradient(105deg, #3a86ff, #00b4d8); color: white; }
     .btn-queue:hover { transform: translateY(-2px); box-shadow: 0 0 12px #3a86ff; }
-    .player-list { background: #171127b3; border-radius: 1.8rem; padding: 1.2rem 1.4rem; margin-top: 1rem; }
-    .player-title { font-weight: 600; margin-bottom: 0.7rem; color: #cfaaff; display: flex; align-items: center; gap: 8px; }
-    .player-badge { background: #421e7a; border-radius: 2rem; padding: 0.25rem 0.7rem; font-size: 0.8rem; }
-    .player-names { display: flex; flex-wrap: wrap; gap: 0.7rem; }
-    .player-tag { background: #2d1f46; padding: 0.4rem 1rem; border-radius: 2rem; font-size: 0.9rem; font-weight: 500; color: #eacdff; border-left: 3px solid #b77aff; }
+    .player-list, .network-list { background: #171127b3; border-radius: 1.8rem; padding: 1rem 1.4rem; margin-top: 1rem; }
+    .player-title, .network-title { font-weight: 600; margin-bottom: 0.7rem; color: #cfaaff; display: flex; align-items: center; gap: 8px; }
+    .player-badge, .network-badge { background: #421e7a; border-radius: 2rem; padding: 0.25rem 0.7rem; font-size: 0.8rem; }
+    .player-names, .network-list-container { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+    .player-tag, .network-tag { background: #2d1f46; padding: 0.4rem 1rem; border-radius: 2rem; font-size: 0.9rem; font-weight: 500; color: #eacdff; border-left: 3px solid #b77aff; }
+    .network-tag-primary { border-left-color: gold; background: #3a2a5e; }
     .geyser-card { margin-top: 1rem; background: #2a1d44aa; border-radius: 1.5rem; padding: 0.7rem; text-align: center; font-family: monospace; font-weight: bold; color: #e5ccff; border: 1px dashed #b77eff; display: none; }
     .error-message { background: #4e1f2f80; border-radius: 2rem; padding: 0.8rem; margin-top: 1rem; text-align: center; color: #ffbbaa; backdrop-filter: blur(2px); }
     .info-note { font-size: 0.75rem; color: #ab88df; text-align: center; margin-top: 1.5rem; border-top: 1px solid #562d9e40; padding-top: 1rem; }
     button:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
-    @media (max-width: 600px) { body { padding: 1rem; } .dashboard { padding: 1.5rem; } .btn { font-size: 0.75rem; min-width: 90px; padding: 0.7rem 0.3rem; } .button-grid { gap: 0.6rem; } }
+    @media (max-width: 650px) { body { padding: 1rem; } .dashboard { padding: 1.5rem; } .btn { font-size: 0.75rem; min-width: 90px; padding: 0.7rem 0.3rem; } .button-grid { gap: 0.6rem; } .network-list-container { flex-direction: column; } .network-tag { word-break: break-all; } }
   </style>
 </head>
 <body>
 <div class="dashboard">
-  <h1>Pagesoftwo <span style="font-size:1rem; background:none;">🔒 Secure</span></h1>
+  <h1>Pagesoftwo <span style="font-size:1rem;">🔒 Secure</span></h1>
   <div class="sub">Play.Hosting · Server Commander</div>
 
   <div class="status-card">
@@ -73,12 +73,23 @@
     </div>
   </div>
 
+  <!-- NEW: Network Allocations Section -->
+  <div class="network-list" id="networkSection" style="display: none;">
+    <div class="network-title">
+      <span>🌐 Network Allocations (IP:Port)</span>
+      <span class="network-badge" id="networkCountBadge">0</span>
+    </div>
+    <div id="networkListContainer" class="network-list-container">
+      <span style="color:#aa94dd;">— loading —</span>
+    </div>
+  </div>
+
   <div id="geyserInfo" class="geyser-card">
     ✨ Geyser ready → <span id="geyserAddress"></span>
   </div>
   <div id="messageArea"></div>
   <div class="info-note">
-    🔐 Secure proxy. If you see "⚪ unknown", check the browser console (F12) for the actual status value.<br>
+    🔐 Secure proxy. Network allocations are shown when server is online or offline (includes Geyser ports).<br>
     🚪 "Join Queue" wakes a limbo server.
   </div>
 </div>
@@ -105,15 +116,13 @@
   async function fetchServerStatus() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}`);
-      // Debug: log the full response to console
       console.log("Full API response:", data);
-      // The status might be under attributes.status or directly at data.status
       let status = data?.attributes?.status || data?.status || "unknown";
       console.log("Extracted status:", status);
-      return status;
+      return { status, fullData: data };
     } catch (err) {
       console.warn("Status fetch error", err);
-      return "error";
+      return { status: "error", fullData: null };
     }
   }
 
@@ -140,7 +149,7 @@
     await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "stop" });
     showMessage("⏹️ Stop command sent.", "info");
     for (let i = 0; i < 15; i++) {
-      const status = await fetchServerStatus();
+      const { status } = await fetchServerStatus();
       if (status === "offline") return true;
       await new Promise(r => setTimeout(r, 2000));
     }
@@ -165,7 +174,7 @@
       let assigned = false;
       while (attempts < maxAttempts) {
         await new Promise(r => setTimeout(r, 3000));
-        const status = await fetchServerStatus();
+        const { status } = await fetchServerStatus();
         if (status !== "limbo" && status !== "error") {
           assigned = true;
           break;
@@ -191,8 +200,8 @@
     btn.disabled = true;
     showMessage("🔧 Fix Bedrock: stopping server...", "info");
     try {
-      let currentStatus = await fetchServerStatus();
-      if (currentStatus !== "offline") {
+      let { status } = await fetchServerStatus();
+      if (status !== "offline") {
         await stopServer();
         await new Promise(r => setTimeout(r, 3000));
       }
@@ -215,22 +224,13 @@
       await startServer();
       let running = false;
       for (let i = 0; i < 20; i++) {
-        const st = await fetchServerStatus();
+        const st = (await fetchServerStatus()).status;
         if (st === "running") { running = true; break; }
         await new Promise(r => setTimeout(r, 2500));
       }
       if (!running) throw new Error("Server failed to start after port cleanup");
-      const freshAttrs = await fetchServerWithAllocations();
-      const primary = freshAttrs?.relationships?.allocations?.data.find(a => a.attributes.is_default)?.attributes;
-      const serverIp = primary?.ip_alias || primary?.ip;
-      let bedrockPort = 19132;
-      const geyserAlloc = freshAttrs?.relationships?.allocations?.data.find(a => a.attributes.notes?.includes("Geyser"));
-      if (geyserAlloc) bedrockPort = geyserAlloc.attributes.port;
-      const geyserConnect = `${serverIp}:${bedrockPort}`;
-      document.getElementById("geyserAddress").innerText = geyserConnect;
-      document.getElementById("geyserInfo").style.display = "block";
-      showMessage(`🧪 Bedrock ready: ${geyserConnect}`, "success");
       await refreshAll();
+      showMessage("🧪 Bedrock ports reset. Check network list below.", "success");
     } catch (err) {
       showMessage(`❌ Fix failed: ${err.message}`, "error");
     } finally {
@@ -254,12 +254,37 @@
     }
   }
 
+  // NEW: Display network allocations from server data
+  function displayNetworkAllocations(fullData) {
+    const networkSection = document.getElementById("networkSection");
+    const container = document.getElementById("networkListContainer");
+    const badge = document.getElementById("networkCountBadge");
+    if (!fullData?.attributes?.relationships?.allocations?.data) {
+      networkSection.style.display = "none";
+      return;
+    }
+    networkSection.style.display = "block";
+    const allocations = fullData.attributes.relationships.allocations.data;
+    badge.innerText = allocations.length;
+    if (allocations.length === 0) {
+      container.innerHTML = "<span style='color:#b596e0;'>No allocations found</span>";
+      return;
+    }
+    container.innerHTML = allocations.map(alloc => {
+      const a = alloc.attributes;
+      const ip = a.ip_alias || a.ip;
+      const port = a.port;
+      const isDefault = a.is_default;
+      const note = a.notes ? ` (${a.notes})` : "";
+      return `<div class="network-tag ${isDefault ? 'network-tag-primary' : ''}">🔌 ${ip}:${port}${note}${isDefault ? ' ⭐' : ''}</div>`;
+    }).join("");
+  }
+
   function updateStatusUI(status) {
     const led = document.getElementById("statusLed");
     const statusText = document.getElementById("statusText");
     led.className = "led";
     const s = status?.toLowerCase() || "unknown";
-    console.log("Updating UI with status:", s);
     if (s === "running") { led.classList.add("online"); statusText.innerText = "🟢 ONLINE · Server active"; }
     else if (s === "offline") { led.classList.add("offline"); statusText.innerText = "🔴 OFFLINE · Server stopped"; }
     else if (s === "starting") { led.classList.add("limbo"); statusText.innerText = "🟡 STARTING · Please wait"; }
@@ -285,6 +310,21 @@
     }
   }
 
+  async function updateGeyserInfo(fullData) {
+    const geyserDiv = document.getElementById("geyserInfo");
+    const geyserSpan = document.getElementById("geyserAddress");
+    const allocations = fullData?.attributes?.relationships?.allocations?.data || [];
+    const geyserAlloc = allocations.find(a => a.attributes.notes?.toLowerCase().includes("geyser"));
+    if (!geyserAlloc) {
+      geyserDiv.style.display = "none";
+      return;
+    }
+    const ip = geyserAlloc.attributes.ip_alias || geyserAlloc.attributes.ip;
+    const port = geyserAlloc.attributes.port;
+    geyserSpan.innerText = `${ip}:${port}`;
+    geyserDiv.style.display = "block";
+  }
+
   function showMessage(msg, type = "info") {
     const area = document.getElementById("messageArea");
     const bg = type === "error" ? "#b8324f" : (type === "success" ? "#3b2b5f" : "#2b1d46");
@@ -304,8 +344,12 @@
     btn.disabled = true;
     btn.innerText = "⟳ ...";
     try {
-      const status = await fetchServerStatus();
+      const { status, fullData } = await fetchServerStatus();
       updateStatusUI(status);
+      if (fullData) {
+        displayNetworkAllocations(fullData);
+        updateGeyserInfo(fullData);
+      }
       if (status === "running") {
         const players = await fetchOnlinePlayers();
         displayPlayers(players);
