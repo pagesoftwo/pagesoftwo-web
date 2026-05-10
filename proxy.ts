@@ -1,65 +1,73 @@
-// proxy.ts - Deploy this to Deno Deploy
-// Environment variables required:
-//   - PLAY_HOSTING_API_KEY : your Pterodactyl client API key
-//   - SERVER_ID            : your Play.Hosting server ID
-
-const PLAY_HOSTING_API_BASE = "https://play.hosting/api/client";
-const API_KEY = Deno.env.get("PLAY_HOSTING_API_KEY");
+// proxy.ts - Deploy to Deno Deploy
+const PLAY_HOSTING_API = "https://play.hosting/api/client";
+const API_KEY = Deno.env.get("API_KEY");
 const SERVER_ID = Deno.env.get("SERVER_ID");
 
 if (!API_KEY || !SERVER_ID) {
-  console.error("Missing required environment variables: PLAY_HOSTING_API_KEY, SERVER_ID");
+  console.error("Missing env: API_KEY, SERVER_ID");
   Deno.exit(1);
 }
 
-// CORS headers to allow your frontend (GitHub Pages) to call this proxy
+// CORS headers – allow your GitHub Pages domain (replace with your actual URL)
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // Restrict to your domain in production, e.g. "https://yourname.github.io"
+  "Access-Control-Allow-Origin": "https://pagesoftwo.github.io", // CHANGE THIS
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Accept",
+  "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization",
   "Access-Control-Allow-Credentials": "false",
 };
 
 Deno.serve(async (req: Request) => {
-  // Handle preflight (OPTIONS) requests for CORS
+  // Handle preflight (OPTIONS) requests
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   const url = new URL(req.url);
-  // Extract the path after /api/... e.g., /servers/123/power
-  const endpoint = url.pathname.replace(/^\/api/, "");
-  const targetUrl = `${PLAY_HOSTING_API_BASE}${endpoint}`;
+  const path = url.pathname;
 
-  // Forward the original request body (if any) and method
-  const headers = new Headers();
-  headers.set("Authorization", `Bearer ${API_KEY}`);
-  headers.set("Content-Type", "application/json");
-  headers.set("Accept", "application/json");
+  // If it's the root path, return a simple status (no forwarding to Play.Hosting)
+  if (path === "/" || path === "") {
+    return new Response(
+      JSON.stringify({ status: "Proxy is running", serverId: SERVER_ID ? "configured" : "missing" }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
 
-  const proxyReq = new Request(targetUrl, {
-    method: req.method,
-    headers: headers,
-    body: req.body,
-  });
+  // Only forward paths that start with /api
+  if (!path.startsWith("/api")) {
+    return new Response(JSON.stringify({ error: "Not found. Use /api/..." }), {
+      status: 404,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
 
+  // Extract endpoint after /api (e.g., /api/servers/123 -> /servers/123)
+  const endpoint = path.replace(/^\/api/, "");
+  const targetUrl = `${PLAY_HOSTING_API}${endpoint}`;
+
+  // Forward the request to Play.Hosting
   try {
+    const proxyReq = new Request(targetUrl, {
+      method: req.method,
+      headers: {
+        "Authorization": `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: req.body,
+    });
+
     const response = await fetch(proxyReq);
     const responseBody = await response.text();
-
-    // Return the proxied response with CORS headers
-    const responseHeaders = new Headers({
-      "Content-Type": response.headers.get("Content-Type") || "application/json",
-      ...corsHeaders,
-    });
+    const contentType = response.headers.get("content-type") || "application/json";
 
     return new Response(responseBody, {
       status: response.status,
-      headers: responseHeaders,
+      headers: { "Content-Type": contentType, ...corsHeaders },
     });
-  } catch (err) {
-    console.error("Proxy error:", err);
-    return new Response(JSON.stringify({ error: "Proxy failed", details: err.message }), {
+  } catch (error) {
+    console.error("Proxy error:", error);
+    return new Response(JSON.stringify({ error: "Proxy failed", details: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
