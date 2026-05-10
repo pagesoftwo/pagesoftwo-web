@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Server Control · Secure Proxy Edition</title>
+  <title>Pagesoftwo</title>
   <style>
     * {
       margin: 0;
@@ -199,8 +199,8 @@
 </head>
 <body>
 <div class="dashboard">
-  <h1>Pagesoftwo <span style="font-size:1rem;">Proxy Mode</span></h1>
-  <div class="sub"></div>
+  <h1>Pagesoftwo <span style="font-size:1rem;">🔒 Secure</span></h1>
+  <div class="sub">Server Commands</div>
 
   <div class="status-card">
     <div class="status-badge">
@@ -231,17 +231,19 @@
   </div>
   <div id="messageArea"></div>
   <div class="info-note">
-    🔐 Your API key and server ID are stored only on Deno Deploy. All requests go through a secure proxy.
+    🔐 Your API key and server ID are stored on Deno Deploy. All requests go through a secure proxy.
   </div>
 </div>
 
 <script>
   // ========== CONFIGURATION ==========
-  // Replace this with your Deno Deploy proxy URL (e.g., https://your-project.deno.dev)
-  const PROXY_BASE = "https://pagesoftwo-web.pagesoftwo.deno.neti";
+  // Replace with your Deno Deploy proxy URL (no trailing slash)
+  const PROXY_BASE = "https://pagesoftwo-web.pagesoftwo.deno.net/api";
+  // Your server UUID (the long one)
+  const SERVER_ID = "648d680a-d340-4eab-8f12-344c30f06026";
   // ===================================
 
-  // Helper: call the proxy instead of direct Play.Hosting
+  // Helper to call the proxy
   async function callProxy(endpoint, method = "GET", body = null) {
     const url = `${PROXY_BASE}${endpoint}`;
     const options = {
@@ -258,17 +260,26 @@
     return await response.json();
   }
 
+  // Get server status (from the /servers/{uuid} endpoint)
   async function fetchServerStatus() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}`);
-      return data.attributes?.current_state || data.attributes?.status || "unknown";
-    } catch { return "error"; }
+      // The API returns an object with "attributes" -> "status"
+      const status = data?.attributes?.status || "unknown";
+      return status;
+    } catch (err) {
+      console.warn("Status fetch error", err);
+      return "error";
+    }
   }
 
+  // Get server details including allocations (for Geyser fix)
   async function fetchServerWithAllocations() {
-    return await callProxy(`/servers/${SERVER_ID}?include=allocations`);
+    const data = await callProxy(`/servers/${SERVER_ID}?include=allocations`);
+    return data.attributes;
   }
 
+  // Power actions
   async function startServer() {
     await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "start" });
     showMessage("✅ Start command sent", "success");
@@ -278,16 +289,16 @@
   async function stopServer() {
     await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "stop" });
     showMessage("⏹️ Stop command sent", "info");
-    let attempts = 0;
-    while (attempts < 15) {
+    // Wait for offline
+    for (let i = 0; i < 15; i++) {
       const status = await fetchServerStatus();
       if (status === "offline") return true;
       await new Promise(r => setTimeout(r, 2000));
-      attempts++;
     }
     throw new Error("Timeout stopping server");
   }
 
+  // Wake from limbo by sending a harmless command
   async function wakeFromLimbo() {
     const status = await fetchServerStatus();
     if (status === "offline") {
@@ -295,10 +306,11 @@
       return;
     }
     await callProxy(`/servers/${SERVER_ID}/command`, "POST", { command: "list" });
-    showMessage("🌀 Wake command sent", "success");
+    showMessage("🌀 Wake command sent – server should exit limbo soon", "success");
     setTimeout(refreshAll, 3000);
   }
 
+  // Fix Bedrock: delete secondary allocations, keep only primary, restart
   async function fixBedrockAndRestart() {
     const btn = document.getElementById("fixBedrockBtn");
     btn.disabled = true;
@@ -309,20 +321,24 @@
         await stopServer();
         await new Promise(r => setTimeout(r, 3000));
       }
-      const serverAttrs = await fetchServerWithAllocations();
-      const allocations = serverAttrs.attributes?.relationships?.allocations?.data || [];
+      const attrs = await fetchServerWithAllocations();
+      const allocations = attrs?.relationships?.allocations?.data || [];
       let primaryAlloc = null;
       let secondaryIds = [];
       for (const alloc of allocations) {
-        if (alloc.attributes.is_primary) primaryAlloc = alloc.attributes;
-        else secondaryIds.push(alloc.attributes.id);
+        if (alloc.attributes.is_default) {
+          primaryAlloc = alloc.attributes;
+        } else {
+          secondaryIds.push(alloc.attributes.id);
+        }
       }
-      if (!primaryAlloc) throw new Error("No primary allocation");
+      if (!primaryAlloc) throw new Error("No primary allocation found");
       showMessage(`Deleting ${secondaryIds.length} extra port(s)...`, "info");
       for (const id of secondaryIds) {
         await callProxy(`/servers/${SERVER_ID}/network/allocations/${id}`, "DELETE");
       }
       await startServer();
+      // Wait for server to become running
       let running = false;
       for (let i = 0; i < 20; i++) {
         const st = await fetchServerStatus();
@@ -330,10 +346,15 @@
         await new Promise(r => setTimeout(r, 2500));
       }
       if (!running) throw new Error("Server failed to start after port cleanup");
-      const fresh = await fetchServerWithAllocations();
-      const primary = fresh.attributes?.relationships?.allocations?.data.find(a => a.attributes.is_primary)?.attributes;
+      // Get fresh server details to show the IP/port for Geyser
+      const freshAttrs = await fetchServerWithAllocations();
+      const primary = freshAttrs?.relationships?.allocations?.data.find(a => a.attributes.is_default)?.attributes;
       const serverIp = primary?.ip_alias || primary?.ip;
-      const bedrockPort = 19132;
+      // Geyser usually uses port 19132, but sometimes the actual Bedrock port is the one with "Geyser" note
+      // In your allocations, there is a port 5276 with notes "Geyser / Bedrock"
+      let bedrockPort = 19132;
+      const geyserAlloc = freshAttrs?.relationships?.allocations?.data.find(a => a.attributes.notes?.includes("Geyser"));
+      if (geyserAlloc) bedrockPort = geyserAlloc.attributes.port;
       const geyserConnect = `${serverIp}:${bedrockPort}`;
       document.getElementById("geyserAddress").innerText = geyserConnect;
       document.getElementById("geyserInfo").style.display = "block";
@@ -346,39 +367,52 @@
     }
   }
 
+  // Get online players (uses the /servers/{uuid}/players endpoint)
   async function fetchOnlinePlayers() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}/players`);
+      // The endpoint returns something like { "data": [ { "attributes": { "username": "..." } } ] }
       let players = [];
-      if (data?.data && Array.isArray(data.data)) players = data.data.map(p => p.attributes?.username);
-      else if (data?.players && Array.isArray(data.players)) players = data.players.map(p => p.username);
-      return players.filter(p => p);
-    } catch { return null; }
+      if (data?.data && Array.isArray(data.data)) {
+        players = data.data.map(p => p.attributes?.username).filter(Boolean);
+      } else if (Array.isArray(data)) {
+        players = data;
+      }
+      return players;
+    } catch (err) {
+      console.warn("Players fetch error (server may be offline):", err);
+      return null; // null means server offline/unreachable
+    }
   }
 
+  // UI updates
   function updateStatusUI(status) {
     const led = document.getElementById("statusLed");
     const statusText = document.getElementById("statusText");
     led.className = "led";
-    let s = status?.toLowerCase() || "unknown";
-    if (s === "running") { led.classList.add("online"); statusText.innerText = "🟢 ONLINE"; }
-    else if (s === "offline") { led.classList.add("offline"); statusText.innerText = "🔴 OFFLINE"; }
-    else if (s === "starting") { led.classList.add("limbo"); statusText.innerText = "🟡 STARTING"; }
-    else if (s === "suspended" || s === "limbo") { led.classList.add("limbo"); statusText.innerText = "🌙 LIMBO"; }
-    else { led.classList.add("offline"); statusText.innerText = `⚪ ${status}`; }
+    const s = status?.toLowerCase() || "unknown";
+    if (s === "running") { led.classList.add("online"); statusText.innerText = "🟢 ONLINE · Server active"; }
+    else if (s === "offline") { led.classList.add("offline"); statusText.innerText = "🔴 OFFLINE · Server stopped"; }
+    else if (s === "starting") { led.classList.add("limbo"); statusText.innerText = "🟡 STARTING · Please wait"; }
+    else if (s === "stopping") { led.classList.add("limbo"); statusText.innerText = "🟠 STOPPING"; }
+    else if (s === "limbo" || s === "suspended") { led.classList.add("limbo"); statusText.innerText = "🌙 LIMBO · Server asleep (use wake)"; }
+    else { led.classList.add("offline"); statusText.innerText = `⚪ ${status || "unknown"}`; }
   }
 
   function displayPlayers(players) {
     const container = document.getElementById("playerListContainer");
     const badge = document.getElementById("playerCountBadge");
     if (players === null) {
-      container.innerHTML = "<span>⚠️ Server offline / unreachable</span>";
+      container.innerHTML = "<span style='color:#d9b0ff;'>⚠️ Server offline – start or wake to see players</span>";
       badge.innerText = "?";
       return;
     }
     badge.innerText = players.length;
-    if (players.length === 0) container.innerHTML = "<span>✨ No players online</span>";
-    else container.innerHTML = players.map(p => `<div class="player-tag">🧸 ${escapeHtml(p)}</div>`).join("");
+    if (players.length === 0) {
+      container.innerHTML = "<span style='color:#b596e0;'>✨ No players online</span>";
+    } else {
+      container.innerHTML = players.map(p => `<div class="player-tag">🧸 ${escapeHtml(p)}</div>`).join("");
+    }
   }
 
   function showMessage(msg, type = "info") {
@@ -388,7 +422,9 @@
     setTimeout(() => { if (area.firstChild) area.removeChild(area.firstChild); }, 5000);
   }
 
-  function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+  function escapeHtml(str) {
+    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+  }
 
   let refreshing = false;
   async function refreshAll() {
@@ -400,31 +436,31 @@
     try {
       const status = await fetchServerStatus();
       updateStatusUI(status);
-      if (status === "running") displayPlayers(await fetchOnlinePlayers());
-      else displayPlayers(null);
-    } catch (err) { showMessage(err.message, "error"); }
-    finally { btn.disabled = false; btn.innerText = "⟳ Refresh"; refreshing = false; }
+      if (status === "running") {
+        const players = await fetchOnlinePlayers();
+        displayPlayers(players);
+      } else {
+        displayPlayers(null);
+      }
+    } catch (err) {
+      showMessage(`Refresh error: ${err.message}`, "error");
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "⟳ Refresh";
+      refreshing = false;
+    }
   }
 
+  // Set up event listeners
   document.getElementById("startServerBtn").onclick = async () => { await startServer(); };
   document.getElementById("wakeLimboBtn").onclick = async () => { await wakeFromLimbo(); };
   document.getElementById("fixBedrockBtn").onclick = async () => { await fixBedrockAndRestart(); };
   document.getElementById("refreshStatusBtn").onclick = () => refreshAll();
 
-  // We need SERVER_ID from proxy? Actually the proxy forwards it, but frontend still needs to know the server ID.
-  // However, to avoid exposing it in HTML, we can ask the proxy to return the server ID from env.
-  // But for simplicity, the frontend still needs to know which server to control.
-  // Let's store it as a variable; but if you want absolutely zero exposure, you'd hardcode it in proxy.
-  // I'll assume you're OK with the server ID being visible (it's not a secret, just an identifier).
-  // If you want it hidden, modify proxy to hardcode server ID and omit it from frontend calls.
-  // For now, we'll ask user to set it here; or you can remove this line and put the ID directly in proxy.
-  // I'll add a constant.
-  const SERVER_ID = "648d680a-d340-4eab-8f12-344c30f06026";  // Replace with your actual server ID (or leave as "PROXY_STORES_IT" and modify proxy)
-  // Better: set SERVER_ID in proxy and don't require frontend to know it. Let's do that.
-  // I'll adjust the HTML to not require SERVER_ID - assume proxy injects it.
-  // Actually, the proxy.ts already injects the server ID from env into the URL? No, the proxy forwards whatever endpoint we send.
-  // If we want the frontend to not know the server ID, we'd need to rewrite endpoints in proxy to always use the known ID.
-  // Simpler: keep it visible. Server IDs are not sensitive (they are like usernames). The API key is the secret.
+  // Initial load
+  refreshAll();
+  // Auto refresh every 15 seconds
+  setInterval(refreshAll, 15000);
 </script>
 </body>
 </html>
