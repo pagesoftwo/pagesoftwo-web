@@ -1,5 +1,5 @@
 // proxy.ts – with corrected Accept header and logging
-const PLAY_HOSTING_API_BASE = "https://play.hosting/api/client";
+const PLAY_HOSTING_API_BASE = "https://panel.play.hosting/api/client";
 const API_KEY = Deno.env.get("API_KEY");
 const SERVER_ID = Deno.env.get("SERVER_ID");
 
