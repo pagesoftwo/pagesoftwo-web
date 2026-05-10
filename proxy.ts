@@ -10,7 +10,7 @@ if (!API_KEY || !SERVER_ID) {
 
 // CORS headers – Replace this with your actual GitHub Pages URL
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://pagesoftwo.github.io",
+  "Access-Control-Allow-Origin": "https://pagesoftwo.xyz",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization",
   "Access-Control-Allow-Credentials": "false",
