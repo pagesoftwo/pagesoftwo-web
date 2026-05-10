@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Pagesoftwo :D Server Control</title>
+  <title>Pagesoftwo · Server Control</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: linear-gradient(145deg, #1a0b2e 0%, #0f0719 100%); font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 2rem; }
@@ -48,7 +48,7 @@
 <body>
 <div class="dashboard">
   <h1>Pagesoftwo <span style="font-size:1rem;">🔒 Secure</span></h1>
-  <div class="sub">Meow</div>
+  <div class="sub">Play.Hosting · Server Commander</div>
 
   <div class="status-card">
     <div class="status-badge">
@@ -91,7 +91,7 @@
   <div id="messageArea"></div>
   <div class="info-note">
     🔐 Secure proxy. Queue position updates automatically after joining.<br>
-    🚪 "Join Queue" wakes a limbo server and shows your spot in line.
+    🧙 Fix Bedrock: stops server → deletes all extra ports → restarts → shows Bedrock IP:port.
   </div>
 </div>
 
@@ -122,7 +122,7 @@
       const data = await callProxy(`/servers/${SERVER_ID}`);
       console.log("Full API response:", data);
       const status = data?.attributes?.status || "unknown";
-      const queue = data?.attributes?.queue; // could be null or a number/object
+      const queue = data?.attributes?.queue;
       let queuePosition = null;
       if (queue && typeof queue === 'object' && queue.position !== undefined) queuePosition = queue.position;
       else if (typeof queue === 'number') queuePosition = queue;
@@ -168,7 +168,6 @@
     throw new Error("Timeout stopping server");
   }
 
-  // Poll queue position and server status after joining queue
   async function pollQueueUntilOnline() {
     if (queuePollInterval) clearInterval(queuePollInterval);
     const queueSpan = document.getElementById("queuePositionSpan");
@@ -184,12 +183,10 @@
           led.className = "led queued";
           statusText.innerText = `⏳ QUEUED · Position ${queuePosition}`;
         } else if (status !== "limbo" && status !== "error") {
-          // Finished queue
           clearInterval(queuePollInterval);
           queueSpan.style.display = "none";
-          refreshAll(); // full refresh
+          refreshAll();
         } else {
-          // No queue position but still limbo
           queueSpan.style.display = "none";
         }
       } catch (err) {
@@ -206,9 +203,7 @@
     try {
       await callProxy(`/servers/${SERVER_ID}/join-queue`, "POST");
       showMessage("✅ Joined queue. Waiting for node assignment...", "success");
-      // Start polling for queue position
       pollQueueUntilOnline();
-      // Also manually refresh once to get initial queue position
       setTimeout(() => refreshAll(), 2000);
     } catch (err) {
       console.error("Join queue error:", err);
@@ -218,40 +213,75 @@
     }
   }
 
+  // ========== FIX BEDROCK - ENHANCED VERSION ==========
   async function fixBedrockAndRestart() {
     const btn = document.getElementById("fixBedrockBtn");
     btn.disabled = true;
     showMessage("🔧 Fix Bedrock: stopping server...", "info");
+
     try {
+      // 1. Stop server if needed
       let currentStatus = await fetchServerStatus();
       if (currentStatus !== "offline") {
         await stopServer();
+        // Extra wait to ensure server is fully off
         await new Promise(r => setTimeout(r, 3000));
+        // Verify it is offline
+        let offlineConfirmed = false;
+        for (let i = 0; i < 5; i++) {
+          if ((await fetchServerStatus()) === "offline") { offlineConfirmed = true; break; }
+          await new Promise(r => setTimeout(r, 2000));
+        }
+        if (!offlineConfirmed) throw new Error("Server did not stop cleanly");
       }
-      // Get allocations
+
+      // 2. Get all allocations
       const attrs = await fetchServerWithAllocations();
       const allocations = attrs?.relationships?.allocations?.data || [];
+      if (allocations.length === 0) throw new Error("No allocations found");
+
+      // Find primary allocation (look for is_default or is_primary)
       let primaryAlloc = null;
       let secondaryIds = [];
       for (const alloc of allocations) {
-        if (alloc.attributes.is_default) {
-          primaryAlloc = alloc.attributes;
+        const a = alloc.attributes;
+        if (a.is_default === true || a.is_primary === true) {
+          primaryAlloc = a;
         } else {
-          secondaryIds.push(alloc.attributes.id);
+          secondaryIds.push(a.id);
         }
       }
-      if (!primaryAlloc) throw new Error("No primary allocation found");
+      // If no primary found, treat the first allocation as primary (fallback)
+      if (!primaryAlloc && allocations.length > 0) {
+        primaryAlloc = allocations[0].attributes;
+        secondaryIds = allocations.slice(1).map(a => a.attributes.id);
+        showMessage("⚠️ No primary flag found, using first allocation as primary.", "info");
+      }
+      if (!primaryAlloc) throw new Error("Could not identify primary allocation");
+
+      showMessage(`Primary: ${primaryAlloc.ip_alias || primaryAlloc.ip}:${primaryAlloc.port}`, "info");
+
+      // 3. Delete secondary allocations
       if (secondaryIds.length > 0) {
         showMessage(`Deleting ${secondaryIds.length} extra port(s)...`, "info");
         for (const id of secondaryIds) {
-          await callProxy(`/servers/${SERVER_ID}/network/allocations/${id}`, "DELETE");
+          try {
+            await callProxy(`/servers/${SERVER_ID}/network/allocations/${id}`, "DELETE");
+            console.log(`Deleted allocation ${id}`);
+          } catch (e) {
+            console.warn(`Failed to delete ${id}:`, e);
+            // Continue even if one fails
+          }
         }
       } else {
         showMessage("No secondary allocations to delete.", "info");
       }
-      // Start server
+
+      // 4. Start the server
+      showMessage("Starting server...", "info");
       await startServer();
-      // Wait for server to become running
+
+      // 5. Wait for server to become running (up to 75 seconds)
       let running = false;
       for (let i = 0; i < 30; i++) {
         const st = await fetchServerStatus();
@@ -259,13 +289,15 @@
         await new Promise(r => setTimeout(r, 2500));
       }
       if (!running) throw new Error("Server failed to start after port cleanup");
-      // Refresh everything to show updated network allocations
+
+      // 6. Refresh everything to show updated network info
       await refreshAll();
-      // Also extract Geyser info for extra clarity
+
+      // 7. Extract and display Geyser info from newly fetched data
       const freshData = (await fetchFullServerData()).fullData;
       if (freshData) {
-        const allocationsData = freshData?.attributes?.relationships?.allocations?.data || [];
-        const geyserAlloc = allocationsData.find(a => a.attributes.notes?.toLowerCase().includes("geyser"));
+        const allocs = freshData?.attributes?.relationships?.allocations?.data || [];
+        const geyserAlloc = allocs.find(a => a.attributes.notes?.toLowerCase().includes("geyser"));
         if (geyserAlloc) {
           const ip = geyserAlloc.attributes.ip_alias || geyserAlloc.attributes.ip;
           const port = geyserAlloc.attributes.port;
@@ -273,10 +305,21 @@
           document.getElementById("geyserInfo").style.display = "block";
           showMessage(`🧪 Bedrock connection: ${ip}:${port}`, "success");
         } else {
-          document.getElementById("geyserInfo").style.display = "none";
+          // If no Geyser tag, try to show primary allocation as fallback (Bedrock often uses same IP, port 19132)
+          const primary = allocs.find(a => a.attributes.is_default || a.attributes.is_primary);
+          if (primary) {
+            const ip = primary.attributes.ip_alias || primary.attributes.ip;
+            const port = 19132; // default Bedrock port
+            document.getElementById("geyserAddress").innerText = `${ip}:${port}`;
+            document.getElementById("geyserInfo").style.display = "block";
+            showMessage(`🧪 Bedrock (default) may be: ${ip}:${port}`, "info");
+          } else {
+            document.getElementById("geyserInfo").style.display = "none";
+          }
         }
       }
     } catch (err) {
+      console.error("Fix Bedrock error:", err);
       showMessage(`❌ Fix failed: ${err.message}`, "error");
     } finally {
       btn.disabled = false;
@@ -318,7 +361,7 @@
       const a = alloc.attributes;
       const ip = a.ip_alias || a.ip;
       const port = a.port;
-      const isDefault = a.is_default;
+      const isDefault = a.is_default === true || a.is_primary === true;
       const note = a.notes ? ` (${a.notes})` : "";
       return `<div class="network-tag ${isDefault ? 'network-tag-primary' : ''}">🔌 ${ip}:${port}${note}${isDefault ? ' ⭐' : ''}</div>`;
     }).join("");
@@ -389,7 +432,6 @@
       updateStatusUI(status, queuePosition);
       if (fullData) {
         displayNetworkAllocations(fullData);
-        // Update Geyser info
         const allocations = fullData?.attributes?.relationships?.allocations?.data || [];
         const geyserAlloc = allocations.find(a => a.attributes.notes?.toLowerCase().includes("geyser"));
         if (geyserAlloc) {
@@ -416,7 +458,6 @@
     }
   }
 
-  // Clean up interval on page unload
   window.addEventListener("beforeunload", () => {
     if (queuePollInterval) clearInterval(queuePollInterval);
   });
