@@ -1,5 +1,5 @@
-// proxy.ts – Corrected and Secured
-const PLAY_HOSTING_API_BASE = "https://play.hosting/api/client"; // The endpoint for the Client API
+// proxy.ts – with corrected Accept header and logging
+const PLAY_HOSTING_API_BASE = "https://play.hosting/api/client";
 const API_KEY = Deno.env.get("API_KEY");
 const SERVER_ID = Deno.env.get("SERVER_ID");
 
@@ -44,12 +44,11 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // 🔧 THE CRITICAL FIX: Build the destination URL for Play.Hosting
-  // This removes the leading "/api" and correctly appends the rest of the path.
+  // Build the destination URL for Play.Hosting
   const endpoint = path.slice(4); // Remove the "/api" prefix
   const targetUrl = `${PLAY_HOSTING_API_BASE}${endpoint}`;
 
-  // Log the request for debugging (these logs will appear in your Deno Deploy's "View Logs" section)
+  // Log the request for debugging
   console.log(`Proxying ${req.method} request to: ${targetUrl}`);
 
   try {
@@ -58,7 +57,8 @@ Deno.serve(async (req: Request) => {
       headers: {
         Authorization: `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
-        Accept: "application/json",
+        // 🔑 THE CRITICAL FIX: This is the Accept header the API expects for a proper JSON response.
+        "Accept": "Application/vnd.pterodactyl.v1+json", 
       },
       body: req.body,
     });
@@ -69,15 +69,15 @@ Deno.serve(async (req: Request) => {
     // Log the response status for debugging
     console.log(`Response status from Play.Hosting: ${response.status}`);
 
-    // Determine the content type to return correctly
+    // Forward the response regardless of content type, but log if it's not JSON.
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      console.error(`Received non-JSON response. Status: ${response.status}, Body: ${responseBody}`);
-      // Forward the error status but provide a cleaner error message to your frontend
+      console.error(`Received non-JSON response. Status: ${response.status}, Body: ${responseBody.substring(0, 500)}`);
+      // Return a clean error to your frontend
       return new Response(
         JSON.stringify({ error: `API returned an error (Status: ${response.status})` }),
         {
-          status: response.status,
+          status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
