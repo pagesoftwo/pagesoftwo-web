@@ -87,6 +87,7 @@
     .led.online { background: #b0ff90; box-shadow: 0 0 8px #a0f080; }
     .led.offline { background: #ff8888; box-shadow: 0 0 6px #ff6666; }
     .led.limbo { background: #ffb347; box-shadow: 0 0 8px #ffae42; }
+    .led.queued { background: #77aaff; box-shadow: 0 0 8px #77aaff; }
 
     .status-text { font-weight: 600; color: #f1e6ff; }
 
@@ -131,6 +132,8 @@
     .btn-outline:hover { background: #6b43a1cc; border-color: #c38eff; }
     .btn-special { background: linear-gradient(105deg, #9b30ff, #c76eff); color: white; }
     .btn-special:hover { transform: translateY(-2px); box-shadow: 0 0 12px #cc88ff; }
+    .btn-queue { background: linear-gradient(105deg, #3a86ff, #00b4d8); color: white; }
+    .btn-queue:hover { transform: translateY(-2px); box-shadow: 0 0 12px #3a86ff; }
 
     .player-list {
       background: #171127b3;
@@ -199,13 +202,13 @@
     }
 
     button:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
-    @media (max-width: 600px) { body { padding: 1rem; } .dashboard { padding: 1.5rem; } .btn { font-size: 0.75rem; min-width: 100px; padding: 0.7rem 0.3rem; } .button-grid { gap: 0.6rem; } }
+    @media (max-width: 600px) { body { padding: 1rem; } .dashboard { padding: 1.5rem; } .btn { font-size: 0.75rem; min-width: 90px; padding: 0.7rem 0.3rem; } .button-grid { gap: 0.6rem; } }
   </style>
 </head>
 <body>
 <div class="dashboard">
   <h1>Pagesoftwo <span style="font-size:1rem; background:none;">🔒 Secure</span></h1>
-  <div class="sub">Server Commands</div>
+  <div class="sub">Play.Hosting · Server Commands</div>
 
   <div class="status-card">
     <div class="status-badge">
@@ -217,7 +220,7 @@
 
   <div class="button-grid">
     <button class="btn btn-primary" id="startServerBtn">▶ Start</button>
-    <button class="btn btn-outline" id="wakeLimboBtn">🌀 Wake from Limbo</button>
+    <button class="btn btn-queue" id="joinQueueBtn">🚪 Join Queue (Wake)</button>
     <button class="btn btn-special" id="fixBedrockBtn">⚙️ Fix Bedrock</button>
   </div>
 
@@ -237,15 +240,13 @@
   <div id="messageArea"></div>
   <div class="info-note">
     🔐 Your API key and server ID are stored on Deno Deploy. All requests go through a secure proxy.<br>
-    🌙 "Wake from Limbo" automatically sends a start command – the proper way to wake a sleeping server.
+    🚪 "Join Queue" is the correct way to wake a limbo server – it will join the node assignment queue and then automatically poll for status.
   </div>
 </div>
 
 <script>
   // ========== CONFIGURATION ==========
-  // Your Deno Deploy proxy URL (no trailing slash)
   const PROXY_BASE = "https://pagesoftwo-web.pagesoftwo.deno.net/api";
-  // Your server UUID (the long one from debug info)
   const SERVER_ID = "648d680a-d340-4eab-8f12-344c30f06026";
   // ===================================
 
@@ -266,7 +267,7 @@
     return await response.json();
   }
 
-  // Get server status (from /servers/{uuid})
+  // Get server status
   async function fetchServerStatus() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}`);
@@ -277,13 +278,13 @@
     }
   }
 
-  // Get full server details with allocations
+  // Get full details with allocations
   async function fetchServerWithAllocations() {
     const data = await callProxy(`/servers/${SERVER_ID}?include=allocations`);
     return data.attributes;
   }
 
-  // Power actions
+  // Start the server (only works if already assigned to a node)
   async function startServer() {
     const btn = document.getElementById("startServerBtn");
     btn.disabled = true;
@@ -298,6 +299,7 @@
     }
   }
 
+  // Stop the server
   async function stopServer() {
     await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "stop" });
     showMessage("⏹️ Stop command sent.", "info");
@@ -309,21 +311,47 @@
     throw new Error("Timeout stopping server");
   }
 
-  // Wake from Limbo: simply start the server (the correct way)
-  async function wakeFromLimbo() {
-    const wakeBtn = document.getElementById("wakeLimboBtn");
-    wakeBtn.disabled = true;
-    showMessage("🌙 Waking server from Limbo. Starting up...", "info");
+  // JOIN QUEUE - the correct way to wake a limbo server
+  async function joinQueue() {
+    const btn = document.getElementById("joinQueueBtn");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    showMessage("🚪 Joining node assignment queue...", "info");
     try {
-      await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "start" });
-      showMessage("✅ Wake command sent! Server is booting up.", "success");
-      await new Promise(r => setTimeout(r, 3000));
-      await refreshAll();
+      // Call the join-queue endpoint (returns 204 No Content on success)
+      await callProxy(`/servers/${SERVER_ID}/join-queue`, "POST");
+      showMessage("✅ Joined queue. Waiting for node assignment...", "success");
+      // Update LED to "queued" state temporarily
+      const led = document.getElementById("statusLed");
+      const statusText = document.getElementById("statusText");
+      led.classList.remove("online", "offline", "limbo");
+      led.classList.add("queued");
+      statusText.innerText = "⏳ QUEUED · Waiting for node...";
+      // Poll status until server is no longer "limbo"
+      let attempts = 0;
+      const maxAttempts = 40; // 40 * 3s = 2 minutes max wait
+      let assigned = false;
+      while (attempts < maxAttempts) {
+        await new Promise(r => setTimeout(r, 3000));
+        const status = await fetchServerStatus();
+        if (status !== "limbo" && status !== "error") {
+          assigned = true;
+          break;
+        }
+        attempts++;
+      }
+      if (assigned) {
+        showMessage("✅ Node assigned! Server is now starting. Please wait...", "success");
+        // Force a refresh to show the new state
+        await refreshAll();
+      } else {
+        showMessage("⏳ Still waiting for node. You can try again or check Play.Hosting panel.", "info");
+      }
     } catch (err) {
-      console.error("Wake error:", err);
-      showMessage(`⚠️ Could not wake server: ${err.message}`, "error");
+      console.error("Join queue error:", err);
+      showMessage(`⚠️ Could not join queue: ${err.message}`, "error");
     } finally {
-      wakeBtn.disabled = false;
+      btn.disabled = false;
     }
   }
 
@@ -409,7 +437,7 @@
     else if (s === "offline") { led.classList.add("offline"); statusText.innerText = "🔴 OFFLINE · Server stopped"; }
     else if (s === "starting") { led.classList.add("limbo"); statusText.innerText = "🟡 STARTING · Please wait"; }
     else if (s === "stopping") { led.classList.add("limbo"); statusText.innerText = "🟠 STOPPING"; }
-    else if (s === "limbo" || s === "suspended") { led.classList.add("limbo"); statusText.innerText = "🌙 LIMBO · Server asleep (use Wake)"; }
+    else if (s === "limbo" || s === "suspended") { led.classList.add("limbo"); statusText.innerText = "🌙 LIMBO · Server asleep (use Join Queue)"; }
     else { led.classList.add("offline"); statusText.innerText = `⚪ ${status || "unknown"}`; }
   }
 
@@ -467,7 +495,7 @@
 
   // Attach event listeners
   document.getElementById("startServerBtn").onclick = startServer;
-  document.getElementById("wakeLimboBtn").onclick = wakeFromLimbo;
+  document.getElementById("joinQueueBtn").onclick = joinQueue;
   document.getElementById("fixBedrockBtn").onclick = fixBedrockAndRestart;
   document.getElementById("refreshStatusBtn").onclick = refreshAll;
 
