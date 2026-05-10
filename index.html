@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pagesoftwo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Pagesoftwo · Server Control</title>
   <style>
     * {
       margin: 0;
@@ -97,7 +97,9 @@
       padding: 0.4rem 1rem;
       border-radius: 2rem;
       cursor: pointer;
+      transition: 0.2s;
     }
+    .refresh-btn:hover { background: #4a2f73; color: white; }
 
     .button-grid {
       display: flex;
@@ -116,18 +118,18 @@
       font-weight: 600;
       color: #eddaff;
       cursor: pointer;
-      transition: 0.2s;
+      transition: all 0.25s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.6rem;
     }
 
-    .btn-primary { background: linear-gradient(105deg, #8849e0, #b05eff); color: white; }
-    .btn-primary:hover { transform: translateY(-2px); background: linear-gradient(105deg, #9a5bef, #c777ff); }
+    .btn-primary { background: linear-gradient(105deg, #8849e0, #b05eff); color: white; text-shadow: 0 0 2px rgba(0,0,0,0.2); }
+    .btn-primary:hover { transform: translateY(-2px); background: linear-gradient(105deg, #9a5bef, #c777ff); box-shadow: 0 10px 20px -6px #995eff80; }
     .btn-outline { border: 1.5px solid #ac73ff; background: rgba(95, 43, 162, 0.3); }
-    .btn-outline:hover { background: #6b43a1cc; }
-    .btn-special { background: linear-gradient(105deg, #9b30ff, #c76eff); }
+    .btn-outline:hover { background: #6b43a1cc; border-color: #c38eff; }
+    .btn-special { background: linear-gradient(105deg, #9b30ff, #c76eff); color: white; }
     .btn-special:hover { transform: translateY(-2px); box-shadow: 0 0 12px #cc88ff; }
 
     .player-list {
@@ -158,6 +160,8 @@
       background: #2d1f46;
       padding: 0.4rem 1rem;
       border-radius: 2rem;
+      font-size: 0.9rem;
+      font-weight: 500;
       color: #eacdff;
       border-left: 3px solid #b77aff;
     }
@@ -182,6 +186,7 @@
       margin-top: 1rem;
       text-align: center;
       color: #ffbbaa;
+      backdrop-filter: blur(2px);
     }
 
     .info-note {
@@ -193,13 +198,13 @@
       padding-top: 1rem;
     }
 
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    @media (max-width: 600px) { .btn { font-size: 0.75rem; } }
+    button:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+    @media (max-width: 600px) { body { padding: 1rem; } .dashboard { padding: 1.5rem; } .btn { font-size: 0.75rem; min-width: 100px; padding: 0.7rem 0.3rem; } .button-grid { gap: 0.6rem; } }
   </style>
 </head>
 <body>
 <div class="dashboard">
-  <h1>Pagesoftwo <span style="font-size:1rem;">🔒 Secure</span></h1>
+  <h1>Pagesoftwo <span style="font-size:1rem; background:none;">🔒 Secure</span></h1>
   <div class="sub">Server Commands</div>
 
   <div class="status-card">
@@ -231,15 +236,16 @@
   </div>
   <div id="messageArea"></div>
   <div class="info-note">
-    🔐 Your API key and server ID are stored on Deno Deploy. All requests go through a secure proxy.
+    🔐 Your API key and server ID are stored on Deno Deploy. All requests go through a secure proxy.<br>
+    🌙 "Wake from Limbo" automatically sends a start command – the proper way to wake a sleeping server.
   </div>
 </div>
 
 <script>
   // ========== CONFIGURATION ==========
-  // Replace with your Deno Deploy proxy URL (no trailing slash)
+  // Your Deno Deploy proxy URL (no trailing slash)
   const PROXY_BASE = "https://pagesoftwo-web.pagesoftwo.deno.net/api";
-  // Your server UUID (the long one)
+  // Your server UUID (the long one from debug info)
   const SERVER_ID = "648d680a-d340-4eab-8f12-344c30f06026";
   // ===================================
 
@@ -253,27 +259,25 @@
     if (body) options.body = JSON.stringify(body);
     const response = await fetch(url, options);
     if (!response.ok) {
-      let errorMsg = await response.text();
-      throw new Error(`Proxy error ${response.status}: ${errorMsg}`);
+      let errorText = await response.text();
+      throw new Error(`Proxy error ${response.status}: ${errorText}`);
     }
     if (response.status === 204) return { success: true };
     return await response.json();
   }
 
-  // Get server status (from the /servers/{uuid} endpoint)
+  // Get server status (from /servers/{uuid})
   async function fetchServerStatus() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}`);
-      // The API returns an object with "attributes" -> "status"
-      const status = data?.attributes?.status || "unknown";
-      return status;
+      return data?.attributes?.status || "unknown";
     } catch (err) {
       console.warn("Status fetch error", err);
       return "error";
     }
   }
 
-  // Get server details including allocations (for Geyser fix)
+  // Get full server details with allocations
   async function fetchServerWithAllocations() {
     const data = await callProxy(`/servers/${SERVER_ID}?include=allocations`);
     return data.attributes;
@@ -281,15 +285,22 @@
 
   // Power actions
   async function startServer() {
-    await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "start" });
-    showMessage("✅ Start command sent", "success");
-    setTimeout(refreshAll, 2000);
+    const btn = document.getElementById("startServerBtn");
+    btn.disabled = true;
+    try {
+      await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "start" });
+      showMessage("✅ Start command sent. Server is booting up.", "success");
+      setTimeout(refreshAll, 3000);
+    } catch (err) {
+      showMessage(`❌ Failed to start: ${err.message}`, "error");
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   async function stopServer() {
     await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "stop" });
-    showMessage("⏹️ Stop command sent", "info");
-    // Wait for offline
+    showMessage("⏹️ Stop command sent.", "info");
     for (let i = 0; i < 15; i++) {
       const status = await fetchServerStatus();
       if (status === "offline") return true;
@@ -298,19 +309,25 @@
     throw new Error("Timeout stopping server");
   }
 
-  // Wake from limbo by sending a harmless command
+  // Wake from Limbo: simply start the server (the correct way)
   async function wakeFromLimbo() {
-    const status = await fetchServerStatus();
-    if (status === "offline") {
-      await startServer();
-      return;
+    const wakeBtn = document.getElementById("wakeLimboBtn");
+    wakeBtn.disabled = true;
+    showMessage("🌙 Waking server from Limbo. Starting up...", "info");
+    try {
+      await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "start" });
+      showMessage("✅ Wake command sent! Server is booting up.", "success");
+      await new Promise(r => setTimeout(r, 3000));
+      await refreshAll();
+    } catch (err) {
+      console.error("Wake error:", err);
+      showMessage(`⚠️ Could not wake server: ${err.message}`, "error");
+    } finally {
+      wakeBtn.disabled = false;
     }
-    await callProxy(`/servers/${SERVER_ID}/command`, "POST", { command: "list" });
-    showMessage("🌀 Wake command sent – server should exit limbo soon", "success");
-    setTimeout(refreshAll, 3000);
   }
 
-  // Fix Bedrock: delete secondary allocations, keep only primary, restart
+  // Fix Bedrock: delete secondary allocations, keep primary, restart
   async function fixBedrockAndRestart() {
     const btn = document.getElementById("fixBedrockBtn");
     btn.disabled = true;
@@ -346,12 +363,10 @@
         await new Promise(r => setTimeout(r, 2500));
       }
       if (!running) throw new Error("Server failed to start after port cleanup");
-      // Get fresh server details to show the IP/port for Geyser
+      // Get fresh server details to show Geyser IP/port
       const freshAttrs = await fetchServerWithAllocations();
       const primary = freshAttrs?.relationships?.allocations?.data.find(a => a.attributes.is_default)?.attributes;
       const serverIp = primary?.ip_alias || primary?.ip;
-      // Geyser usually uses port 19132, but sometimes the actual Bedrock port is the one with "Geyser" note
-      // In your allocations, there is a port 5276 with notes "Geyser / Bedrock"
       let bedrockPort = 19132;
       const geyserAlloc = freshAttrs?.relationships?.allocations?.data.find(a => a.attributes.notes?.includes("Geyser"));
       if (geyserAlloc) bedrockPort = geyserAlloc.attributes.port;
@@ -367,11 +382,10 @@
     }
   }
 
-  // Get online players (uses the /servers/{uuid}/players endpoint)
+  // Get online players
   async function fetchOnlinePlayers() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}/players`);
-      // The endpoint returns something like { "data": [ { "attributes": { "username": "..." } } ] }
       let players = [];
       if (data?.data && Array.isArray(data.data)) {
         players = data.data.map(p => p.attributes?.username).filter(Boolean);
@@ -380,8 +394,8 @@
       }
       return players;
     } catch (err) {
-      console.warn("Players fetch error (server may be offline):", err);
-      return null; // null means server offline/unreachable
+      console.warn("Players fetch error (server offline or limbo):", err);
+      return null;
     }
   }
 
@@ -395,7 +409,7 @@
     else if (s === "offline") { led.classList.add("offline"); statusText.innerText = "🔴 OFFLINE · Server stopped"; }
     else if (s === "starting") { led.classList.add("limbo"); statusText.innerText = "🟡 STARTING · Please wait"; }
     else if (s === "stopping") { led.classList.add("limbo"); statusText.innerText = "🟠 STOPPING"; }
-    else if (s === "limbo" || s === "suspended") { led.classList.add("limbo"); statusText.innerText = "🌙 LIMBO · Server asleep (use wake)"; }
+    else if (s === "limbo" || s === "suspended") { led.classList.add("limbo"); statusText.innerText = "🌙 LIMBO · Server asleep (use Wake)"; }
     else { led.classList.add("offline"); statusText.innerText = `⚪ ${status || "unknown"}`; }
   }
 
@@ -403,7 +417,7 @@
     const container = document.getElementById("playerListContainer");
     const badge = document.getElementById("playerCountBadge");
     if (players === null) {
-      container.innerHTML = "<span style='color:#d9b0ff;'>⚠️ Server offline – start or wake to see players</span>";
+      container.innerHTML = "<span style='color:#d9b0ff;'>⚠️ Server offline or in limbo – start to see players</span>";
       badge.innerText = "?";
       return;
     }
@@ -451,15 +465,14 @@
     }
   }
 
-  // Set up event listeners
-  document.getElementById("startServerBtn").onclick = async () => { await startServer(); };
-  document.getElementById("wakeLimboBtn").onclick = async () => { await wakeFromLimbo(); };
-  document.getElementById("fixBedrockBtn").onclick = async () => { await fixBedrockAndRestart(); };
-  document.getElementById("refreshStatusBtn").onclick = () => refreshAll();
+  // Attach event listeners
+  document.getElementById("startServerBtn").onclick = startServer;
+  document.getElementById("wakeLimboBtn").onclick = wakeFromLimbo;
+  document.getElementById("fixBedrockBtn").onclick = fixBedrockAndRestart;
+  document.getElementById("refreshStatusBtn").onclick = refreshAll;
 
-  // Initial load
+  // Initial load and auto-refresh every 15 seconds
   refreshAll();
-  // Auto refresh every 15 seconds
   setInterval(refreshAll, 15000);
 </script>
 </body>
