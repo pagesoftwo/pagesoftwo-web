@@ -5,128 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Pagesoftwo · Server Control</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      background: linear-gradient(145deg, #1a0b2e 0%, #0f0719 100%);
-      font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
-    }
-
-    .dashboard {
-      max-width: 700px;
-      width: 100%;
-      background: rgba(46, 21, 82, 0.55);
-      backdrop-filter: blur(14px);
-      border-radius: 3rem;
-      border: 1px solid rgba(175, 112, 245, 0.4);
-      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5);
-      padding: 2rem 1.8rem;
-    }
-
-    h1 {
-      font-size: 2rem;
-      background: linear-gradient(135deg, #e0b0ff, #b77eff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      margin-bottom: 0.4rem;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    h1::before {
-      content: "⚡";
-      font-size: 2rem;
-      color: #c77dff;
-    }
-
-    .sub {
-      color: #ba9bdd;
-      margin-bottom: 2rem;
-      border-left: 3px solid #b77eff;
-      padding-left: 0.9rem;
-      font-size: 0.9rem;
-    }
-
-    .status-card {
-      background: #221a33cc;
-      border-radius: 2rem;
-      padding: 1rem 1.4rem;
-      margin-bottom: 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-      border: 1px solid #9d65e0;
-    }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-    }
-
-    .led {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: gray;
-      transition: all 0.2s;
-    }
+    /* (same CSS as before, no changes needed) */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: linear-gradient(145deg, #1a0b2e 0%, #0f0719 100%); font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+    .dashboard { max-width: 700px; width: 100%; background: rgba(46, 21, 82, 0.55); backdrop-filter: blur(14px); border-radius: 3rem; border: 1px solid rgba(175, 112, 245, 0.4); box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5); padding: 2rem 1.8rem; }
+    h1 { font-size: 2rem; background: linear-gradient(135deg, #e0b0ff, #b77eff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.6rem; }
+    h1::before { content: "⚡"; font-size: 2rem; color: #c77dff; }
+    .sub { color: #ba9bdd; margin-bottom: 2rem; border-left: 3px solid #b77eff; padding-left: 0.9rem; font-size: 0.9rem; }
+    .status-card { background: #221a33cc; border-radius: 2rem; padding: 1rem 1.4rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; border: 1px solid #9d65e0; }
+    .status-badge { display: flex; align-items: center; gap: 0.7rem; }
+    .led { width: 14px; height: 14px; border-radius: 50%; background: gray; transition: all 0.2s; }
     .led.online { background: #b0ff90; box-shadow: 0 0 8px #a0f080; }
     .led.offline { background: #ff8888; box-shadow: 0 0 6px #ff6666; }
     .led.limbo { background: #ffb347; box-shadow: 0 0 8px #ffae42; }
     .led.queued { background: #77aaff; box-shadow: 0 0 8px #77aaff; }
-
     .status-text { font-weight: 600; color: #f1e6ff; }
-
-    .refresh-btn {
-      background: #2f2046;
-      border: none;
-      color: #cba6ff;
-      padding: 0.4rem 1rem;
-      border-radius: 2rem;
-      cursor: pointer;
-      transition: 0.2s;
-    }
+    .refresh-btn { background: #2f2046; border: none; color: #cba6ff; padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; transition: 0.2s; }
     .refresh-btn:hover { background: #4a2f73; color: white; }
-
-    .button-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin: 1rem 0 1.8rem;
-    }
-
-    .btn {
-      flex: 1;
-      min-width: 120px;
-      background: #2a1b42;
-      border: none;
-      padding: 0.9rem 0.5rem;
-      border-radius: 2.2rem;
-      font-weight: 600;
-      color: #eddaff;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-    }
-
-    .btn-primary { background: linear-gradient(105deg, #8849e0, #b05eff); color: white; text-shadow: 0 0 2px rgba(0,0,0,0.2); }
+    .button-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0 1.8rem; }
+    .btn { flex: 1; min-width: 120px; background: #2a1b42; border: none; padding: 0.9rem 0.5rem; border-radius: 2.2rem; font-weight: 600; color: #eddaff; cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+    .btn-primary { background: linear-gradient(105deg, #8849e0, #b05eff); color: white; }
     .btn-primary:hover { transform: translateY(-2px); background: linear-gradient(105deg, #9a5bef, #c777ff); box-shadow: 0 10px 20px -6px #995eff80; }
     .btn-outline { border: 1.5px solid #ac73ff; background: rgba(95, 43, 162, 0.3); }
     .btn-outline:hover { background: #6b43a1cc; border-color: #c38eff; }
@@ -134,73 +32,14 @@
     .btn-special:hover { transform: translateY(-2px); box-shadow: 0 0 12px #cc88ff; }
     .btn-queue { background: linear-gradient(105deg, #3a86ff, #00b4d8); color: white; }
     .btn-queue:hover { transform: translateY(-2px); box-shadow: 0 0 12px #3a86ff; }
-
-    .player-list {
-      background: #171127b3;
-      border-radius: 1.8rem;
-      padding: 1.2rem 1.4rem;
-      margin-top: 1rem;
-    }
-
-    .player-title {
-      font-weight: 600;
-      margin-bottom: 0.7rem;
-      color: #cfaaff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .player-badge {
-      background: #421e7a;
-      border-radius: 2rem;
-      padding: 0.25rem 0.7rem;
-      font-size: 0.8rem;
-    }
-
+    .player-list { background: #171127b3; border-radius: 1.8rem; padding: 1.2rem 1.4rem; margin-top: 1rem; }
+    .player-title { font-weight: 600; margin-bottom: 0.7rem; color: #cfaaff; display: flex; align-items: center; gap: 8px; }
+    .player-badge { background: #421e7a; border-radius: 2rem; padding: 0.25rem 0.7rem; font-size: 0.8rem; }
     .player-names { display: flex; flex-wrap: wrap; gap: 0.7rem; }
-    .player-tag {
-      background: #2d1f46;
-      padding: 0.4rem 1rem;
-      border-radius: 2rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: #eacdff;
-      border-left: 3px solid #b77aff;
-    }
-
-    .geyser-card {
-      margin-top: 1rem;
-      background: #2a1d44aa;
-      border-radius: 1.5rem;
-      padding: 0.7rem;
-      text-align: center;
-      font-family: monospace;
-      font-weight: bold;
-      color: #e5ccff;
-      border: 1px dashed #b77eff;
-      display: none;
-    }
-
-    .error-message {
-      background: #4e1f2f80;
-      border-radius: 2rem;
-      padding: 0.8rem;
-      margin-top: 1rem;
-      text-align: center;
-      color: #ffbbaa;
-      backdrop-filter: blur(2px);
-    }
-
-    .info-note {
-      font-size: 0.75rem;
-      color: #ab88df;
-      text-align: center;
-      margin-top: 1.5rem;
-      border-top: 1px solid #562d9e40;
-      padding-top: 1rem;
-    }
-
+    .player-tag { background: #2d1f46; padding: 0.4rem 1rem; border-radius: 2rem; font-size: 0.9rem; font-weight: 500; color: #eacdff; border-left: 3px solid #b77aff; }
+    .geyser-card { margin-top: 1rem; background: #2a1d44aa; border-radius: 1.5rem; padding: 0.7rem; text-align: center; font-family: monospace; font-weight: bold; color: #e5ccff; border: 1px dashed #b77eff; display: none; }
+    .error-message { background: #4e1f2f80; border-radius: 2rem; padding: 0.8rem; margin-top: 1rem; text-align: center; color: #ffbbaa; backdrop-filter: blur(2px); }
+    .info-note { font-size: 0.75rem; color: #ab88df; text-align: center; margin-top: 1.5rem; border-top: 1px solid #562d9e40; padding-top: 1rem; }
     button:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
     @media (max-width: 600px) { body { padding: 1rem; } .dashboard { padding: 1.5rem; } .btn { font-size: 0.75rem; min-width: 90px; padding: 0.7rem 0.3rem; } .button-grid { gap: 0.6rem; } }
   </style>
@@ -208,7 +47,7 @@
 <body>
 <div class="dashboard">
   <h1>Pagesoftwo <span style="font-size:1rem; background:none;">🔒 Secure</span></h1>
-  <div class="sub">Play.Hosting  Server Commands</div>
+  <div class="sub">Play.Hosting · Server Commander</div>
 
   <div class="status-card">
     <div class="status-badge">
@@ -239,8 +78,8 @@
   </div>
   <div id="messageArea"></div>
   <div class="info-note">
-    🔐 Your API key and server ID are stored on Deno Deploy. All requests go through a secure proxy.<br>
-    🚪 "Join Queue" is the correct way to wake a limbo server – it will join the node assignment queue and then automatically poll for status.
+    🔐 Secure proxy. If you see "⚪ unknown", check the browser console (F12) for the actual status value.<br>
+    🚪 "Join Queue" wakes a limbo server.
   </div>
 </div>
 
@@ -250,13 +89,9 @@
   const SERVER_ID = "648d680a-d340-4eab-8f12-344c30f06026";
   // ===================================
 
-  // Helper to call the proxy
   async function callProxy(endpoint, method = "GET", body = null) {
     const url = `${PROXY_BASE}${endpoint}`;
-    const options = {
-      method,
-      headers: { "Content-Type": "application/json" },
-    };
+    const options = { method, headers: { "Content-Type": "application/json" } };
     if (body) options.body = JSON.stringify(body);
     const response = await fetch(url, options);
     if (!response.ok) {
@@ -267,24 +102,26 @@
     return await response.json();
   }
 
-  // Get server status
   async function fetchServerStatus() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}`);
-      return data?.attributes?.status || "unknown";
+      // Debug: log the full response to console
+      console.log("Full API response:", data);
+      // The status might be under attributes.status or directly at data.status
+      let status = data?.attributes?.status || data?.status || "unknown";
+      console.log("Extracted status:", status);
+      return status;
     } catch (err) {
       console.warn("Status fetch error", err);
       return "error";
     }
   }
 
-  // Get full details with allocations
   async function fetchServerWithAllocations() {
     const data = await callProxy(`/servers/${SERVER_ID}?include=allocations`);
     return data.attributes;
   }
 
-  // Start the server (only works if already assigned to a node)
   async function startServer() {
     const btn = document.getElementById("startServerBtn");
     btn.disabled = true;
@@ -299,7 +136,6 @@
     }
   }
 
-  // Stop the server
   async function stopServer() {
     await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "stop" });
     showMessage("⏹️ Stop command sent.", "info");
@@ -311,25 +147,21 @@
     throw new Error("Timeout stopping server");
   }
 
-  // JOIN QUEUE - the correct way to wake a limbo server
   async function joinQueue() {
     const btn = document.getElementById("joinQueueBtn");
     if (btn.disabled) return;
     btn.disabled = true;
     showMessage("🚪 Joining node assignment queue...", "info");
     try {
-      // Call the join-queue endpoint (returns 204 No Content on success)
       await callProxy(`/servers/${SERVER_ID}/join-queue`, "POST");
       showMessage("✅ Joined queue. Waiting for node assignment...", "success");
-      // Update LED to "queued" state temporarily
       const led = document.getElementById("statusLed");
       const statusText = document.getElementById("statusText");
       led.classList.remove("online", "offline", "limbo");
       led.classList.add("queued");
       statusText.innerText = "⏳ QUEUED · Waiting for node...";
-      // Poll status until server is no longer "limbo"
       let attempts = 0;
-      const maxAttempts = 40; // 40 * 3s = 2 minutes max wait
+      const maxAttempts = 40;
       let assigned = false;
       while (attempts < maxAttempts) {
         await new Promise(r => setTimeout(r, 3000));
@@ -342,7 +174,6 @@
       }
       if (assigned) {
         showMessage("✅ Node assigned! Server is now starting. Please wait...", "success");
-        // Force a refresh to show the new state
         await refreshAll();
       } else {
         showMessage("⏳ Still waiting for node. You can try again or check Play.Hosting panel.", "info");
@@ -355,7 +186,6 @@
     }
   }
 
-  // Fix Bedrock: delete secondary allocations, keep primary, restart
   async function fixBedrockAndRestart() {
     const btn = document.getElementById("fixBedrockBtn");
     btn.disabled = true;
@@ -383,7 +213,6 @@
         await callProxy(`/servers/${SERVER_ID}/network/allocations/${id}`, "DELETE");
       }
       await startServer();
-      // Wait for server to become running
       let running = false;
       for (let i = 0; i < 20; i++) {
         const st = await fetchServerStatus();
@@ -391,7 +220,6 @@
         await new Promise(r => setTimeout(r, 2500));
       }
       if (!running) throw new Error("Server failed to start after port cleanup");
-      // Get fresh server details to show Geyser IP/port
       const freshAttrs = await fetchServerWithAllocations();
       const primary = freshAttrs?.relationships?.allocations?.data.find(a => a.attributes.is_default)?.attributes;
       const serverIp = primary?.ip_alias || primary?.ip;
@@ -410,7 +238,6 @@
     }
   }
 
-  // Get online players
   async function fetchOnlinePlayers() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}/players`);
@@ -427,25 +254,26 @@
     }
   }
 
-  // UI updates
   function updateStatusUI(status) {
     const led = document.getElementById("statusLed");
     const statusText = document.getElementById("statusText");
     led.className = "led";
     const s = status?.toLowerCase() || "unknown";
+    console.log("Updating UI with status:", s);
     if (s === "running") { led.classList.add("online"); statusText.innerText = "🟢 ONLINE · Server active"; }
     else if (s === "offline") { led.classList.add("offline"); statusText.innerText = "🔴 OFFLINE · Server stopped"; }
     else if (s === "starting") { led.classList.add("limbo"); statusText.innerText = "🟡 STARTING · Please wait"; }
     else if (s === "stopping") { led.classList.add("limbo"); statusText.innerText = "🟠 STOPPING"; }
     else if (s === "limbo" || s === "suspended") { led.classList.add("limbo"); statusText.innerText = "🌙 LIMBO · Server asleep (use Join Queue)"; }
-    else { led.classList.add("offline"); statusText.innerText = `⚪ ${status || "unknown"}`; }
+    else if (s === "error") { led.classList.add("offline"); statusText.innerText = "⚠️ ERROR · Could not fetch status"; }
+    else { led.classList.add("offline"); statusText.innerText = `⚪ ${status} (unknown)`; }
   }
 
   function displayPlayers(players) {
     const container = document.getElementById("playerListContainer");
     const badge = document.getElementById("playerCountBadge");
     if (players === null) {
-      container.innerHTML = "<span style='color:#d9b0ff;'>⚠️ Server offline or in limbo – start to see players</span>";
+      container.innerHTML = "<span style='color:#d9b0ff;'>⚠️ Server offline or in limbo – join queue to see players</span>";
       badge.innerText = "?";
       return;
     }
@@ -493,13 +321,11 @@
     }
   }
 
-  // Attach event listeners
   document.getElementById("startServerBtn").onclick = startServer;
   document.getElementById("joinQueueBtn").onclick = joinQueue;
   document.getElementById("fixBedrockBtn").onclick = fixBedrockAndRestart;
   document.getElementById("refreshStatusBtn").onclick = refreshAll;
 
-  // Initial load and auto-refresh every 15 seconds
   refreshAll();
   setInterval(refreshAll, 15000);
 </script>
