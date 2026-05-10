@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Pagesoftwo Srv</title>
+  <title>Pagesoftwo :D Server Control</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: linear-gradient(145deg, #1a0b2e 0%, #0f0719 100%); font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 2rem; }
@@ -12,13 +12,14 @@
     h1::before { content: "⚡"; font-size: 2rem; color: #c77dff; }
     .sub { color: #ba9bdd; margin-bottom: 2rem; border-left: 3px solid #b77eff; padding-left: 0.9rem; font-size: 0.9rem; }
     .status-card { background: #221a33cc; border-radius: 2rem; padding: 1rem 1.4rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; border: 1px solid #9d65e0; }
-    .status-badge { display: flex; align-items: center; gap: 0.7rem; }
+    .status-badge { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
     .led { width: 14px; height: 14px; border-radius: 50%; background: gray; transition: all 0.2s; }
     .led.online { background: #b0ff90; box-shadow: 0 0 8px #a0f080; }
     .led.offline { background: #ff8888; box-shadow: 0 0 6px #ff6666; }
     .led.limbo { background: #ffb347; box-shadow: 0 0 8px #ffae42; }
     .led.queued { background: #77aaff; box-shadow: 0 0 8px #77aaff; }
     .status-text { font-weight: 600; color: #f1e6ff; }
+    .queue-position { font-size: 0.85rem; background: #2f2046; padding: 0.2rem 0.8rem; border-radius: 2rem; color: #cba6ff; }
     .refresh-btn { background: #2f2046; border: none; color: #cba6ff; padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; transition: 0.2s; }
     .refresh-btn:hover { background: #4a2f73; color: white; }
     .button-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0 1.5rem; }
@@ -47,12 +48,13 @@
 <body>
 <div class="dashboard">
   <h1>Pagesoftwo <span style="font-size:1rem;">🔒 Secure</span></h1>
-  <div class="sub">Play.Hosting · Server Commander</div>
+  <div class="sub">Meow</div>
 
   <div class="status-card">
     <div class="status-badge">
       <div class="led offline" id="statusLed"></div>
       <span class="status-text" id="statusText">—</span>
+      <span id="queuePositionSpan" class="queue-position" style="display: none;"></span>
     </div>
     <button class="refresh-btn" id="refreshStatusBtn">⟳ Refresh</button>
   </div>
@@ -73,7 +75,6 @@
     </div>
   </div>
 
-  <!-- NEW: Network Allocations Section -->
   <div class="network-list" id="networkSection" style="display: none;">
     <div class="network-title">
       <span>🌐 Network Allocations (IP:Port)</span>
@@ -89,8 +90,8 @@
   </div>
   <div id="messageArea"></div>
   <div class="info-note">
-    🔐 Secure proxy. Network allocations are shown when server is online or offline (includes Geyser ports).<br>
-    🚪 "Join Queue" wakes a limbo server.
+    🔐 Secure proxy. Queue position updates automatically after joining.<br>
+    🚪 "Join Queue" wakes a limbo server and shows your spot in line.
   </div>
 </div>
 
@@ -99,6 +100,8 @@
   const PROXY_BASE = "https://pagesoftwo-web.pagesoftwo.deno.net/api";
   const SERVER_ID = "648d680a-d340-4eab-8f12-344c30f06026";
   // ===================================
+
+  let queuePollInterval = null;
 
   async function callProxy(endpoint, method = "GET", body = null) {
     const url = `${PROXY_BASE}${endpoint}`;
@@ -113,17 +116,26 @@
     return await response.json();
   }
 
-  async function fetchServerStatus() {
+  // Fetch full server data (status + queue)
+  async function fetchFullServerData() {
     try {
       const data = await callProxy(`/servers/${SERVER_ID}`);
       console.log("Full API response:", data);
-      let status = data?.attributes?.status || data?.status || "unknown";
-      console.log("Extracted status:", status);
-      return { status, fullData: data };
+      const status = data?.attributes?.status || "unknown";
+      const queue = data?.attributes?.queue; // could be null or a number/object
+      let queuePosition = null;
+      if (queue && typeof queue === 'object' && queue.position !== undefined) queuePosition = queue.position;
+      else if (typeof queue === 'number') queuePosition = queue;
+      return { status, queuePosition, fullData: data };
     } catch (err) {
-      console.warn("Status fetch error", err);
-      return { status: "error", fullData: null };
+      console.warn("Fetch error", err);
+      return { status: "error", queuePosition: null, fullData: null };
     }
+  }
+
+  async function fetchServerStatus() {
+    const { status } = await fetchFullServerData();
+    return status;
   }
 
   async function fetchServerWithAllocations() {
@@ -148,12 +160,42 @@
   async function stopServer() {
     await callProxy(`/servers/${SERVER_ID}/power`, "POST", { signal: "stop" });
     showMessage("⏹️ Stop command sent.", "info");
-    for (let i = 0; i < 15; i++) {
-      const { status } = await fetchServerStatus();
+    for (let i = 0; i < 20; i++) {
+      const status = await fetchServerStatus();
       if (status === "offline") return true;
       await new Promise(r => setTimeout(r, 2000));
     }
     throw new Error("Timeout stopping server");
+  }
+
+  // Poll queue position and server status after joining queue
+  async function pollQueueUntilOnline() {
+    if (queuePollInterval) clearInterval(queuePollInterval);
+    const queueSpan = document.getElementById("queuePositionSpan");
+    const led = document.getElementById("statusLed");
+    const statusText = document.getElementById("statusText");
+    
+    queuePollInterval = setInterval(async () => {
+      try {
+        const { status, queuePosition } = await fetchFullServerData();
+        if (queuePosition !== null && queuePosition !== undefined && status === "limbo") {
+          queueSpan.style.display = "inline-block";
+          queueSpan.innerText = `📋 Queue: ${queuePosition}`;
+          led.className = "led queued";
+          statusText.innerText = `⏳ QUEUED · Position ${queuePosition}`;
+        } else if (status !== "limbo" && status !== "error") {
+          // Finished queue
+          clearInterval(queuePollInterval);
+          queueSpan.style.display = "none";
+          refreshAll(); // full refresh
+        } else {
+          // No queue position but still limbo
+          queueSpan.style.display = "none";
+        }
+      } catch (err) {
+        console.warn("Queue poll error", err);
+      }
+    }, 3000);
   }
 
   async function joinQueue() {
@@ -164,29 +206,10 @@
     try {
       await callProxy(`/servers/${SERVER_ID}/join-queue`, "POST");
       showMessage("✅ Joined queue. Waiting for node assignment...", "success");
-      const led = document.getElementById("statusLed");
-      const statusText = document.getElementById("statusText");
-      led.classList.remove("online", "offline", "limbo");
-      led.classList.add("queued");
-      statusText.innerText = "⏳ QUEUED · Waiting for node...";
-      let attempts = 0;
-      const maxAttempts = 40;
-      let assigned = false;
-      while (attempts < maxAttempts) {
-        await new Promise(r => setTimeout(r, 3000));
-        const { status } = await fetchServerStatus();
-        if (status !== "limbo" && status !== "error") {
-          assigned = true;
-          break;
-        }
-        attempts++;
-      }
-      if (assigned) {
-        showMessage("✅ Node assigned! Server is now starting. Please wait...", "success");
-        await refreshAll();
-      } else {
-        showMessage("⏳ Still waiting for node. You can try again or check Play.Hosting panel.", "info");
-      }
+      // Start polling for queue position
+      pollQueueUntilOnline();
+      // Also manually refresh once to get initial queue position
+      setTimeout(() => refreshAll(), 2000);
     } catch (err) {
       console.error("Join queue error:", err);
       showMessage(`⚠️ Could not join queue: ${err.message}`, "error");
@@ -200,11 +223,12 @@
     btn.disabled = true;
     showMessage("🔧 Fix Bedrock: stopping server...", "info");
     try {
-      let { status } = await fetchServerStatus();
-      if (status !== "offline") {
+      let currentStatus = await fetchServerStatus();
+      if (currentStatus !== "offline") {
         await stopServer();
         await new Promise(r => setTimeout(r, 3000));
       }
+      // Get allocations
       const attrs = await fetchServerWithAllocations();
       const allocations = attrs?.relationships?.allocations?.data || [];
       let primaryAlloc = null;
@@ -217,20 +241,41 @@
         }
       }
       if (!primaryAlloc) throw new Error("No primary allocation found");
-      showMessage(`Deleting ${secondaryIds.length} extra port(s)...`, "info");
-      for (const id of secondaryIds) {
-        await callProxy(`/servers/${SERVER_ID}/network/allocations/${id}`, "DELETE");
+      if (secondaryIds.length > 0) {
+        showMessage(`Deleting ${secondaryIds.length} extra port(s)...`, "info");
+        for (const id of secondaryIds) {
+          await callProxy(`/servers/${SERVER_ID}/network/allocations/${id}`, "DELETE");
+        }
+      } else {
+        showMessage("No secondary allocations to delete.", "info");
       }
+      // Start server
       await startServer();
+      // Wait for server to become running
       let running = false;
-      for (let i = 0; i < 20; i++) {
-        const st = (await fetchServerStatus()).status;
+      for (let i = 0; i < 30; i++) {
+        const st = await fetchServerStatus();
         if (st === "running") { running = true; break; }
         await new Promise(r => setTimeout(r, 2500));
       }
       if (!running) throw new Error("Server failed to start after port cleanup");
+      // Refresh everything to show updated network allocations
       await refreshAll();
-      showMessage("🧪 Bedrock ports reset. Check network list below.", "success");
+      // Also extract Geyser info for extra clarity
+      const freshData = (await fetchFullServerData()).fullData;
+      if (freshData) {
+        const allocationsData = freshData?.attributes?.relationships?.allocations?.data || [];
+        const geyserAlloc = allocationsData.find(a => a.attributes.notes?.toLowerCase().includes("geyser"));
+        if (geyserAlloc) {
+          const ip = geyserAlloc.attributes.ip_alias || geyserAlloc.attributes.ip;
+          const port = geyserAlloc.attributes.port;
+          document.getElementById("geyserAddress").innerText = `${ip}:${port}`;
+          document.getElementById("geyserInfo").style.display = "block";
+          showMessage(`🧪 Bedrock connection: ${ip}:${port}`, "success");
+        } else {
+          document.getElementById("geyserInfo").style.display = "none";
+        }
+      }
     } catch (err) {
       showMessage(`❌ Fix failed: ${err.message}`, "error");
     } finally {
@@ -254,7 +299,6 @@
     }
   }
 
-  // NEW: Display network allocations from server data
   function displayNetworkAllocations(fullData) {
     const networkSection = document.getElementById("networkSection");
     const container = document.getElementById("networkListContainer");
@@ -280,18 +324,30 @@
     }).join("");
   }
 
-  function updateStatusUI(status) {
+  function updateStatusUI(status, queuePosition = null) {
     const led = document.getElementById("statusLed");
     const statusText = document.getElementById("statusText");
+    const queueSpan = document.getElementById("queuePositionSpan");
     led.className = "led";
     const s = status?.toLowerCase() || "unknown";
-    if (s === "running") { led.classList.add("online"); statusText.innerText = "🟢 ONLINE · Server active"; }
-    else if (s === "offline") { led.classList.add("offline"); statusText.innerText = "🔴 OFFLINE · Server stopped"; }
-    else if (s === "starting") { led.classList.add("limbo"); statusText.innerText = "🟡 STARTING · Please wait"; }
-    else if (s === "stopping") { led.classList.add("limbo"); statusText.innerText = "🟠 STOPPING"; }
-    else if (s === "limbo" || s === "suspended") { led.classList.add("limbo"); statusText.innerText = "🌙 LIMBO · Server asleep (use Join Queue)"; }
-    else if (s === "error") { led.classList.add("offline"); statusText.innerText = "⚠️ ERROR · Could not fetch status"; }
-    else { led.classList.add("offline"); statusText.innerText = `⚪ ${status} (unknown)`; }
+    if (s === "running") { led.classList.add("online"); statusText.innerText = "🟢 ONLINE · Server active"; queueSpan.style.display = "none"; }
+    else if (s === "offline") { led.classList.add("offline"); statusText.innerText = "🔴 OFFLINE · Server stopped"; queueSpan.style.display = "none"; }
+    else if (s === "starting") { led.classList.add("limbo"); statusText.innerText = "🟡 STARTING · Please wait"; queueSpan.style.display = "none"; }
+    else if (s === "stopping") { led.classList.add("limbo"); statusText.innerText = "🟠 STOPPING"; queueSpan.style.display = "none"; }
+    else if (s === "limbo" || s === "suspended") {
+      led.classList.add("limbo");
+      if (queuePosition !== null && queuePosition !== undefined) {
+        statusText.innerText = `⏳ QUEUED · Position ${queuePosition}`;
+        queueSpan.style.display = "inline-block";
+        queueSpan.innerText = `📋 Queue: ${queuePosition}`;
+        led.classList.add("queued");
+      } else {
+        statusText.innerText = "🌙 LIMBO · Server asleep (use Join Queue)";
+        queueSpan.style.display = "none";
+      }
+    }
+    else if (s === "error") { led.classList.add("offline"); statusText.innerText = "⚠️ ERROR · Could not fetch status"; queueSpan.style.display = "none"; }
+    else { led.classList.add("offline"); statusText.innerText = `⚪ ${status} (unknown)`; queueSpan.style.display = "none"; }
   }
 
   function displayPlayers(players) {
@@ -308,21 +364,6 @@
     } else {
       container.innerHTML = players.map(p => `<div class="player-tag">🧸 ${escapeHtml(p)}</div>`).join("");
     }
-  }
-
-  async function updateGeyserInfo(fullData) {
-    const geyserDiv = document.getElementById("geyserInfo");
-    const geyserSpan = document.getElementById("geyserAddress");
-    const allocations = fullData?.attributes?.relationships?.allocations?.data || [];
-    const geyserAlloc = allocations.find(a => a.attributes.notes?.toLowerCase().includes("geyser"));
-    if (!geyserAlloc) {
-      geyserDiv.style.display = "none";
-      return;
-    }
-    const ip = geyserAlloc.attributes.ip_alias || geyserAlloc.attributes.ip;
-    const port = geyserAlloc.attributes.port;
-    geyserSpan.innerText = `${ip}:${port}`;
-    geyserDiv.style.display = "block";
   }
 
   function showMessage(msg, type = "info") {
@@ -344,11 +385,21 @@
     btn.disabled = true;
     btn.innerText = "⟳ ...";
     try {
-      const { status, fullData } = await fetchServerStatus();
-      updateStatusUI(status);
+      const { status, queuePosition, fullData } = await fetchFullServerData();
+      updateStatusUI(status, queuePosition);
       if (fullData) {
         displayNetworkAllocations(fullData);
-        updateGeyserInfo(fullData);
+        // Update Geyser info
+        const allocations = fullData?.attributes?.relationships?.allocations?.data || [];
+        const geyserAlloc = allocations.find(a => a.attributes.notes?.toLowerCase().includes("geyser"));
+        if (geyserAlloc) {
+          const ip = geyserAlloc.attributes.ip_alias || geyserAlloc.attributes.ip;
+          const port = geyserAlloc.attributes.port;
+          document.getElementById("geyserAddress").innerText = `${ip}:${port}`;
+          document.getElementById("geyserInfo").style.display = "block";
+        } else {
+          document.getElementById("geyserInfo").style.display = "none";
+        }
       }
       if (status === "running") {
         const players = await fetchOnlinePlayers();
@@ -364,6 +415,11 @@
       refreshing = false;
     }
   }
+
+  // Clean up interval on page unload
+  window.addEventListener("beforeunload", () => {
+    if (queuePollInterval) clearInterval(queuePollInterval);
+  });
 
   document.getElementById("startServerBtn").onclick = startServer;
   document.getElementById("joinQueueBtn").onclick = joinQueue;
